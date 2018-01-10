@@ -1,0 +1,13 @@
+{
+	"sets": [
+		{"id": "stand", "from": 0, "to": 10},
+		{"id": "standAnim", "from": 10, "to": 19},
+		{"id": "run", "from": 20, "to": 29},
+		{"id": "attack", "from": 30, "to": 39},
+		{"id": "brake", "frames": [29]},
+		{"id": "jump", "frames": [22]},
+		{"id": "soar", "frames": [25]},
+		{"id": "fall", "frames": [27]},
+		{"id": "death", "from": 40, "to": 49}
+	]
+}
