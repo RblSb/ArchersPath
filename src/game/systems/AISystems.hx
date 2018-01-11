@@ -28,9 +28,9 @@ class UpdateAIControl implements ISystem {
 		
 		if (coll.down) { //on ground
 			if (side == 0) { //no tile collision
-				var size = dir == 1 ? size.w : 0;
+				var sizeW = dir == 1 ? size.w : 0;
 				
-				if (dir != 0 && !canFallDown(pos.x + size + speed.x, pos.y, 2)) {
+				if (dir != 0 && !canFallDown(pos.x + sizeW + speed.x, pos.y, 2)) {
 					setMoveDirection(keys, dir);
 				}
 				
@@ -40,10 +40,10 @@ class UpdateAIControl implements ISystem {
 			}
 		
 		} else { //in air
-			var size = dir == 1 ? size.w * 2 : -size.w;
+			var sizeW = dir == 1 ? size.w * 2 : -size.w;
 			
 			if (side == 0) {
-				if (dir != 0 && !canFallDown(pos.x + size + speed.x, pos.y, 3)) {
+				if (dir != 0 && !canFallDown(pos.x + sizeW + speed.x, pos.y + size.h, 3)) {
 					setMoveDirection(keys, dir);
 				}
 				
