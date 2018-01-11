@@ -16,25 +16,27 @@ private typedef Tiles = { //tiles.json
 }
 
 private typedef Props = {
-	?name:String,
-	?id:Int,
-	?load:String,
-	?collide:Bool,
-	?type:Slope,
-	?permeable:Bool,
+	name:String,
+	id:Int,
+	load:String,
+	collide:Bool,
+	type:Slope,
+	permeable:Bool,
 	?frames:Array<Props>
 }
 
-enum Slope {
-	NONE;
-	HALF_BOTTOM_LEFT;
-	HALF_BOTTOM_RIGHT;
-	HALF_TOP_LEFT;
-	HALF_TOP_RIGHT;
-	HALF_BOTTOM;
-	HALF_TOP;
-	HALF_LEFT;
-	HALF_RIGHT;
+@:enum
+abstract Slope(Int) {
+	var NONE = -1;
+	var FULL = 0;
+	var HALF_BOTTOM = 1;
+	var HALF_TOP = 2;
+	var HALF_LEFT = 3;
+	var HALF_RIGHT = 4;
+	var HALF_BOTTOM_LEFT = 5;
+	var HALF_BOTTOM_RIGHT = 6;
+	var HALF_TOP_LEFT = 7;
+	var HALF_TOP_RIGHT = 8;
 }
 
 typedef GameMap = { //map format
@@ -77,7 +79,6 @@ class Lvl {
 	var layersOffset:Array<Int>;
 	var layersNum:Int;
 	var tilesNum:Int;
-	var emptyProps:Props = {id: 0, collide: false, type: Slope.NONE, permeable: true};
 	var props:Array<Array<Props>>;
 	
 	public var map(default, null):GameMap;
@@ -106,7 +107,7 @@ class Lvl {
 		var text = Assets.blobs.tiles_json.toString();
 		var json:Tiles = haxe.Json.parse(text);
 		
-		var ts = new TilesetGenerator(json, emptyProps);
+		var ts = new TilesetGenerator(json);
 		origTsize = tsize = ts.tsize;
 		layersNum = ts.layersNum;
 		tilesNum = ts.tilesNum;
@@ -195,7 +196,7 @@ class Lvl {
 			var id = map.layers[layer][y][x];
 			return props[layer][id];
 		}
-		return emptyProps;
+		return props[layer][0];
 	}
 	
 	public function drawTile(g:Graphics, layer:Int, x:Int, y:Int, id:Int):Void {
@@ -215,8 +216,8 @@ class Lvl {
 	
 	public function drawLayer(g:Graphics, layer:Int):Void {
 		//camera in tiles
-		var ctx = -Std.int(camera.x/tsize);
-		var cty = -Std.int(camera.y/tsize);
+		var ctx = -Std.int(camera.x / tsize);
+		var cty = -Std.int(camera.y / tsize);
 		var ctw = ctx + screenW;
 		var cth = cty + screenH;
 		var camX = Std.int(camera.x);
@@ -265,8 +266,8 @@ class Lvl {
 	}
 	
 	public function resize():Void {
-		screenW = Math.ceil(Screen.w/tsize) + 1;
-		screenH = Math.ceil(Screen.h/tsize) + 1;
+		screenW = Math.ceil(Screen.w / tsize) + 1;
+		screenH = Math.ceil(Screen.h / tsize) + 1;
 	}
 	
 	function _rescale(scale:Float):Void {
@@ -442,22 +443,25 @@ private class TilesetGenerator {
 	public var layersNum:Int;
 	public var tilesNum:Int;
 	public var props:Array<Array<Props>>;
-	
+	var emptyProps:Props = {name: "", load: "", id: 0, collide: false, type: Slope.FULL, permeable: true};
 	public var tileset:Image;
 	public var tilesetW:Int;
 	public var tilesetH:Int;
 	public var tsize:Int;
+	var offx = 0;
+	var x = 0;
+	var y = 0;
 	
-	public function new(json:Tiles, emptyProps:Props):Void {
+	public function new(json:Tiles):Void {
 		var layers = json.layers;
 		tsize = json.tsize;
 		layersNum = layers.length;
 		tilesNum = countTiles(layers);
-		tilesOffset = [];
-		spritesLink = [];
-		spritesOffset = [];
-		layersOffset = [0];
-		props = [];
+		tilesOffset = []; //offsets in tiles range
+		spritesLink = []; //tile to first frame links
+		spritesOffset = []; //offsets in sprites range 
+		layersOffset = [0]; //offsets in layers range
+		props = []; //json props for every tile/sprite
 		
 		tilesetW = Math.ceil(Math.sqrt(tilesNum));
 		tilesetH = Math.ceil(tilesNum / tilesetW);
@@ -465,7 +469,7 @@ private class TilesetGenerator {
 		var g = tileset.g2;
 		g.begin(true, 0x0);
 		Screen.pipeline(g);
-		var offx = tsize;
+		pushOffset();
 		
 		for (l in 0...layersNum) {
 			var layer = layers[l];
@@ -477,24 +481,25 @@ private class TilesetGenerator {
 				var tile = layer[id];
 				tile.id = id + 1;
 				var bmd = loadTile(l, tile.name);
-				drawTile(g, bmd, offx, 0);
-				offx += tsize;
-				tilesN++;
+				drawTile(g, bmd, 0);
 				props[l].push(tile);
+				tilesN++;
 				
 				switch(tile.load) {
 				case "rotate":
 					for (i in 1...4) {
-						drawRotatedTile(g, bmd, offx, 0, i * 90);
-						offx += tsize;
-						tilesN++;
+						drawRotatedTile(g, bmd, 0, i * 90);
 						props[l].push(tile);
+						tilesN++;
 					}
 				case "flipX":
-					drawFlipXTile(g, bmd, offx, 0);
-					offx += tsize;
-					tilesN++;
+					drawFlipXTile(g, bmd, 0);
 					props[l].push(tile);
+					tilesN++;
+				case "flipY":
+					drawFlipYTile(g, bmd, 0);
+					props[l].push(tile);
+					tilesN++;
 				default:
 				}
 					
@@ -507,53 +512,39 @@ private class TilesetGenerator {
 			
 			for (tile in layer) {
 				var bmd = loadTile(l, tile.name);
-				var frames = Std.int(bmd.width/tsize);
+				var frames = Std.int(bmd.width / tsize);
 				if (frames < 2) continue;
 				
-				var len = spritesOffset[l].length - 1;
-				spritesLink[l][tile.id] = len;
-				spritesOffset[l].push(spritesOffset[l][len] + frames-1);
-				
+				saveSpriteOffset(l, tile.id, frames);
 				for (i in 1...frames) {
-					drawTile(g, bmd, offx, i);
-					offx += tsize;
+					drawTile(g, bmd, i);
+					addFrameProps(l, layer[tile.id-1], i);
 					spritesN++;
-					
-					var sprite = layer[tile.id-1];
-					if (sprite.frames == null) props[l].push(sprite);
-					else props[l].push(sprite.frames[i-1]);
 				}
 				
 				switch(tile.load) {
 				case "rotate":
 					for (i2 in 1...4) {
-						var len = spritesOffset[l].length - 1;
-						spritesLink[l][tile.id+i2] = len;
-						spritesOffset[l].push(spritesOffset[l][len] + frames-1);
-					
+						saveSpriteOffset(l, tile.id + i2, frames);
 						for (i in 1...frames) {
-							drawRotatedTile(g, bmd, offx, i, i2 * 90);
-							offx += tsize;
+							drawRotatedTile(g, bmd, i, i2 * 90);
+							addFrameProps(l, layer[tile.id-1], i);
 							spritesN++;
-						
-							var sprite = layer[tile.id-1];
-							if (sprite.frames == null) props[l].push(sprite);
-							else props[l].push(sprite.frames[i-1]);
 						}
 					}
 				case "flipX":
-					var len = spritesOffset[l].length - 1;
-					spritesLink[l][tile.id+1] = len;
-					spritesOffset[l].push(spritesOffset[l][len] + frames-1);
-					
+					saveSpriteOffset(l, tile.id + 1, frames);
 					for (i in 1...frames) {
-						drawFlipXTile(g, bmd, offx, i);
-						offx += tsize;
+						drawFlipXTile(g, bmd, i);
+						addFrameProps(l, layer[tile.id-1], i);
 						spritesN++;
-						
-						var sprite = layer[tile.id-1];
-						if (sprite.frames == null) props[l].push(sprite);
-						else props[l].push(sprite.frames[i-1]);
+					}
+				case "flipY":
+					saveSpriteOffset(l, tile.id + 1, frames);
+					for (i in 1...frames) {
+						drawFlipXTile(g, bmd, i);
+						addFrameProps(l, layer[tile.id-1], i);
+						spritesN++;
 					}
 				default:
 				}
@@ -576,7 +567,7 @@ private class TilesetGenerator {
 				var num = Std.int(bmd.width / tsize);
 				switch(tile.load) {
 				case "rotate": num *= 4;
-				case "flipX": num *= 2;
+				case "flipX", "flipY": num *= 2;
 				default:
 				}
 				count += num;
@@ -591,26 +582,47 @@ private class TilesetGenerator {
 		return Reflect.field(Assets.images, "tiles_"+layer+"_"+tile);
 	}
 	
-	inline function drawTile(g:Graphics, bmd:Image, offx:Int, i:Int):Void {
-		var x = offx % (tilesetW * tsize);
-		var y = Std.int(offx / (tilesetW * tsize)) * tsize;
-		g.drawSubImage(bmd, x, y, i*tsize, 0, tsize, tsize);
+	inline function drawTile(g:Graphics, bmd:Image, i:Int):Void {
+		g.drawSubImage(bmd, x, y, i * tsize, 0, tsize, tsize);
+		pushOffset();
 	}
 	
-	inline function drawRotatedTile(g:Graphics, bmd:Image, offx:Int, i:Int, ang:Int):Void {
-		var x = offx % (tilesetW * tsize);
-		var y = Std.int(offx / (tilesetW * tsize)) * tsize;
+	inline function drawRotatedTile(g:Graphics, bmd:Image, i:Int, ang:Int):Void {
 		g.rotate(ang * Math.PI/180, x + tsize/2, y + tsize/2);
 		g.drawSubImage(bmd, x, y, i * tsize, 0, tsize, tsize);
 		g.transformation = Utils.matrix();
+		pushOffset();
 	}
 	
-	inline function drawFlipXTile(g:Graphics, bmd:Image, offx:Int, i:Int):Void {
-		var x = offx % (tilesetW * tsize);
-		var y = Std.int(offx / (tilesetW * tsize)) * tsize;
+	inline function drawFlipXTile(g:Graphics, bmd:Image, i:Int):Void {
 		g.transformation = Utils.matrix(-1, 0, x*2 + tsize);
 		g.drawSubImage(bmd, x, y, i * tsize, 0, tsize, tsize);
 		g.transformation = Utils.matrix();
+		pushOffset();
+	}
+	
+	inline function drawFlipYTile(g:Graphics, bmd:Image, i:Int):Void {
+		g.transformation = Utils.matrix(1, 0, 0, -1, 0, y*2 + tsize);
+		g.drawSubImage(bmd, x, y, i * tsize, 0, tsize, tsize);
+		g.transformation = Utils.matrix();
+		pushOffset();
+	}
+	
+	inline function pushOffset():Void {
+		offx += tsize;
+		x = offx % (tilesetW * tsize);
+		y = Std.int(offx / (tilesetW * tsize)) * tsize;
+	}
+	
+	inline function saveSpriteOffset(l:Int, id:Int, frames:Int):Void {
+		var len = spritesOffset[l].length - 1;
+		spritesLink[l][id] = len;
+		spritesOffset[l].push(spritesOffset[l][len] + frames - 1);
+	}
+	
+	inline function addFrameProps(l:Int, sprite:Props, id:Int):Void {
+		if (sprite.frames == null) props[l].push(sprite);
+		else props[l].push(sprite.frames[id-1]);
 	}
 	
 }
