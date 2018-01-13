@@ -16,16 +16,16 @@ private typedef Tiles = { //tiles.json
 }
 
 private typedef Props = {
-	name:String,
 	id:Int,
-	load:String,
 	collide:Bool,
 	type:Slope,
 	permeable:Bool,
+	?file:String,
+	?add:Array<String>,
 	?frames:Array<Props>
 }
 
-@:enum
+/*@:enum
 abstract Slope(Int) {
 	var NONE = -1;
 	var FULL = 0;
@@ -37,6 +37,55 @@ abstract Slope(Int) {
 	var HALF_BOTTOM_RIGHT = 6;
 	var HALF_TOP_LEFT = 7;
 	var HALF_TOP_RIGHT = 8;
+}*/
+
+@:enum
+abstract Slope(Int) from Int to Int {
+	public static inline var NONE = -1;
+	public static inline var FULL = 0;
+	public static inline var HALF_BOTTOM = 1;
+	public static inline var HALF_TOP = 2;
+	public static inline var HALF_LEFT = 3;
+	public static inline var HALF_RIGHT = 4;
+	public static inline var HALF_BOTTOM_LEFT = 5;
+	public static inline var HALF_BOTTOM_RIGHT = 6;
+	public static inline var HALF_TOP_LEFT = 7;
+	public static inline var HALF_TOP_RIGHT = 8;
+	@:from public static function fromString(type:String):Slope {
+		//trace(haxe.EnumTools.getConstructors(Slope));
+		//EnumValueTools.getName()
+		return new Slope(switch(type) {
+		case "NONE": NONE;
+		case "FULL": FULL;
+		case "HALF_BOTTOM": HALF_BOTTOM;
+		case "HALF_TOP": HALF_TOP;
+		case "HALF_LEFT": HALF_LEFT;
+		case "HALF_RIGHT": HALF_RIGHT;
+		case "HALF_BOTTOM_LEFT": HALF_BOTTOM_LEFT;
+		case "HALF_BOTTOM_RIGHT": HALF_BOTTOM_RIGHT;
+		case "HALF_TOP_LEFT": HALF_TOP_LEFT;
+		case "HALF_TOP_RIGHT": HALF_TOP_RIGHT;
+		default: NONE;
+		});
+	}
+	public inline function new(type:Slope) {
+		this = type;
+	}
+	public static function rotate(type:Slope):Slope {
+		return new Slope(switch(type) {
+			case NONE: NONE;
+			case FULL: FULL;
+			case HALF_BOTTOM: HALF_LEFT;
+			case HALF_TOP: HALF_RIGHT;
+			case HALF_LEFT: HALF_TOP;
+			case HALF_RIGHT: HALF_BOTTOM;
+			case HALF_BOTTOM_LEFT: HALF_TOP_LEFT;
+			case HALF_BOTTOM_RIGHT: HALF_BOTTOM_LEFT;
+			case HALF_TOP_LEFT: HALF_TOP_RIGHT;
+			case HALF_TOP_RIGHT: HALF_BOTTOM_RIGHT;
+			default: NONE;
+		});
+	}
 }
 
 typedef GameMap = { //map format
@@ -443,7 +492,7 @@ private class TilesetGenerator {
 	public var layersNum:Int;
 	public var tilesNum:Int;
 	public var props:Array<Array<Props>>;
-	var emptyProps:Props = {name: "", load: "", id: 0, collide: false, type: Slope.FULL, permeable: true};
+	var emptyProps:Props = {id: 0, collide: false, type: Slope.NONE, permeable: true};
 	public var tileset:Image;
 	public var tilesetW:Int;
 	public var tilesetH:Int;
@@ -454,6 +503,10 @@ private class TilesetGenerator {
 	
 	public function new(json:Tiles):Void {
 		var layers = json.layers;
+		for (layer in layers)
+			for (id in 0...layer.length)
+				fillProps(layer[id], id);
+		
 		tsize = json.tsize;
 		layersNum = layers.length;
 		tilesNum = countTiles(layers);
@@ -477,28 +530,29 @@ private class TilesetGenerator {
 			props.push([emptyProps]);
 			var tilesN = 0;
 			
-			for (id in 0...layer.length) {
-				var tile = layer[id];
-				tile.id = id + 1;
-				var bmd = loadTile(l, tile.name);
+			for (tile in layer) {
+				var bmd = loadTile(l, tile.file);
 				drawTile(g, bmd, 0);
 				props[l].push(tile);
 				tilesN++;
 				
-				switch(tile.load) {
+				for (add in tile.add) switch(add) {
 				case "rotate":
 					for (i in 1...4) {
 						drawRotatedTile(g, bmd, 0, i * 90);
-						props[l].push(tile);
+						addSlopedProps(l, tile, add + (i * 90));
+						//props[l].push(tile);
 						tilesN++;
 					}
 				case "flipX":
 					drawFlipXTile(g, bmd, 0);
-					props[l].push(tile);
+					addSlopedProps(l, tile, add);
+					//props[l].push(tile);
 					tilesN++;
 				case "flipY":
 					drawFlipYTile(g, bmd, 0);
-					props[l].push(tile);
+					addSlopedProps(l, tile, add);
+					//props[l].push(tile);
 					tilesN++;
 				default:
 				}
@@ -511,7 +565,7 @@ private class TilesetGenerator {
 			var spritesN = 0;
 			
 			for (tile in layer) {
-				var bmd = loadTile(l, tile.name);
+				var bmd = loadTile(l, tile.file);
 				var frames = Std.int(bmd.width / tsize);
 				if (frames < 2) continue;
 				
@@ -522,7 +576,7 @@ private class TilesetGenerator {
 					spritesN++;
 				}
 				
-				switch(tile.load) {
+				for (add in tile.add) switch(add) {
 				case "rotate":
 					for (i2 in 1...4) {
 						saveSpriteOffset(l, tile.id + i2, frames);
@@ -558,16 +612,27 @@ private class TilesetGenerator {
 		g.end();
 	}
 	
+	inline function fillProps(tile:Props, id:Int):Void {
+		tile.id = id + 1;
+		if (tile.file == null) tile.file = "" + tile.id;
+		if (tile.add == null) tile.add = [];
+		if (tile.collide == null) tile.collide = false;
+		if (tile.type == null) {
+			tile.type = tile.collide ? Slope.FULL : Slope.NONE;
+		} else tile.type = cast(tile.type, String); //fix separate props
+		if (tile.permeable == null) tile.permeable = true;
+	}
+	
 	inline function countTiles(layers:Array<Array<Props>>):Int {
 		var count = 1;
 		for (l in 0...layersNum) {
 			var layer = layers[l];
 			for (tile in layer) {
-				var bmd = loadTile(l, tile.name);
+				var bmd = loadTile(l, tile.file);
 				var num = Std.int(bmd.width / tsize);
-				switch(tile.load) {
-				case "rotate": num *= 4;
-				case "flipX", "flipY": num *= 2;
+				for (add in tile.add) switch(add) {
+				case "rotate": count += num * 3;
+				case "flipX", "flipY": count += num;
 				default:
 				}
 				count += num;
@@ -576,10 +641,10 @@ private class TilesetGenerator {
 		return count;
 	}
 	
-	inline function loadTile(layer:Int, tile:String):Image {
+	inline function loadTile(layer:Int, file:String):Image {
 		var ereg = ~/-/g;
-		tile = ereg.replace(tile, "_");
-		return Reflect.field(Assets.images, "tiles_"+layer+"_"+tile);
+		file = ereg.replace(file, "_");
+		return Reflect.field(Assets.images, "tiles_"+layer+"_"+file);
 	}
 	
 	inline function drawTile(g:Graphics, bmd:Image, i:Int):Void {
@@ -618,6 +683,21 @@ private class TilesetGenerator {
 		var len = spritesOffset[l].length - 1;
 		spritesLink[l][id] = len;
 		spritesOffset[l].push(spritesOffset[l][len] + frames - 1);
+	}
+	
+	inline function addSlopedProps(l:Int, tile:Props, type:String):Void {
+		var tile = Reflect.copy(tile);
+		props[l].push(tile);
+		switch(type) {
+		case "rotate90": tile.type = Slope.rotate(tile.type);
+		case "rotate180": for (i in 0...2) tile.type = Slope.rotate(tile.type);
+		case "rotate270": for (i in 0...3) tile.type = Slope.rotate(tile.type);
+		case "flipX": //tile.type = Slope.flipX(tile.type);
+			for (i in 0...2) tile.type = Slope.rotate(tile.type);
+		case "flipY": //tile.type = Slope.flipY(tile.type);
+			for (i in 0...2) tile.type = Slope.rotate(tile.type);
+		default: throw("incorrect sloped props: " + type);
+		}
 	}
 	
 	inline function addFrameProps(l:Int, sprite:Props, id:Int):Void {

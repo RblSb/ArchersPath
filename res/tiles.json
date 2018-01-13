@@ -4,148 +4,155 @@
 	"layers": [
 		[
 			{
-				"name": "1"
+				"file": "1"
 			},
 			{
-				"name": "2",
-				"load": "rotate"
+				"file": "2",
+				"add": ["rotate"]
 			}
 		],
 		[
 			{
-				"name": "grass-up",
+				"file": "grass_t",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "grass-up2",
+				"file": "grass2_t",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "grass-bg-up",
+				"file": "grass_t_bg",
 				"collide": false,
 				"permeable": false
 			},
 			{
-				"name": "grass-bg-up2",
-				"load": "flipX",
+				"file": "grass2_t_bg",
+				"add": ["flipX"],
 				"collide": false,
 				"permeable": false
 			},
 			{
-				"name": "grass-up-left",
-				"load": "flipX",
+				"file": "grass_tl",
+				"add": ["flipX"],
+				"type": "HALF_RIGHT",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "ground-up",
+				"file": "ground_t",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "ground-up2",
+				"file": "ground2_t",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "ground-bg-up",
+				"file": "ground_t_bg",
 				"collide": false,
 				"permeable": false
 			},
 			{
-				"name": "ground-bg-up2",
+				"file": "ground2_t_bg",
 				"collide": false,
 				"permeable": false
 			},
 			{
-				"name": "ground-bg-up-plant",
+				"file": "ground3_t_bg",
 				"collide": false,
 				"permeable": false
 			},
 			{
-				"name": "ground-up-left",
-				"load": "flipX",
+				"file": "ground_tl",
+				"add": ["flipX"],
+				"type": "HALF_RIGHT",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "ground-bg-left",
-				"load": "flipX",
+				"file": "ground_l_bg",
+				"add": ["flipX"],
 				"collide": false,
 				"permeable": false
 			},
 			{
-				"name": "ground-left",
-				"load": "flipX",
+				"file": "ground_l",
+				"add": ["flipX"],
+				"type": "HALF_RIGHT",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "ground-bg-up-left",
-				"load": "flipX",
+				"file": "ground_tl_bg",
+				"add": ["flipX"],
+				"type": "HALF_RIGHT",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "ground-up-left2",
-				"load": "flipX",
+				"file": "ground2_tl",
+				"add": ["flipX"],
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "ground-down-left",
-				"load": "flipX",
+				"file": "ground_bl",
+				"add": ["flipX"],
+				"type": "HALF_TOP_RIGHT",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "ground-down",
+				"file": "ground_b",
+				"type": "HALF_BOTTOM",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "bg",
+				"file": "ground",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "bg-plant",
+				"file": "ground2",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "bg-crack",
+				"file": "ground3",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "bridge",
+				"file": "bridge",
+				"type": "HALF_TOP",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"name": "bridge-bg-up",
+				"file": "bridge_t_bg",
 				"collide": false,
 				"permeable": false
 			}
 		],
 		[
 			{
-				"name": "1"
+				"file": "1"
 			},
 			{
-				"name": "2"
+				"file": "2"
 			},
 			{
-				"name": "3"
+				"file": "3"
 			},
 			{
-				"name": "4"
+				"file": "4"
 			},
 			{
-				"name": "5"
+				"file": "5"
 			}
 		]
 	]

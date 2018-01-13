@@ -4,6 +4,7 @@ import kha.graphics2.Graphics;
 import edge.ISystem;
 import edge.View;
 import game.Components;
+import Lvl.Slope;
 import Types.Point;
 import Types.Rect;
 
@@ -23,37 +24,31 @@ class UpdateTileCollision implements ISystem {
 	function get_tsize() return Game.lvl.tsize;
 	var lvl(get, never):Lvl;
 	function get_lvl() return Game.lvl;
-	var targets:View<{coll:Collision, pos:Position, size:Size, speed:Speed, gr:Gravity}>;
 	
-	function update():Void {
-		for (item in targets) {
-			var e = item.data;
-			if (e.pos.fixed) continue;
-			var speed = e.speed;
-			e.coll.state = false;
+	function update(coll:Collision, pos:Position, size:Size, speed:Speed, gr:Gravity):Void {
+		if (pos.fixed) return;
+		coll.state = false;
 			
-			e.coll.left = false;
-			e.coll.right = false;
-			e.pos.x += speed.x;
-			collision(e, 0);
+		coll.left = false;
+		coll.right = false;
+		pos.x += speed.x;
+		collision(coll, pos, size, speed, 0);
 			
-			e.coll.up = false;
-			e.coll.down = false;
-			e.pos.y += speed.y;
-			collision(e, 1);
+		coll.up = false;
+		coll.down = false;
+		pos.y += speed.y;
+		collision(coll, pos, size, speed, 1);
 			
-			e.pos.x -= speed.x;
-			e.pos.y -= speed.y;
-		}
+		pos.x -= speed.x;
+		pos.y -= speed.y;
 	}
 	
-	function collision(e:{coll:Collision, pos:Position, size:Size, speed:Speed, gr:Gravity}, dir:Int):Bool {
-		var collide = false;
+	function collision(coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int):Void {
 		var rect:Rect = {
-			x: e.pos.x,
-			y: e.pos.y,
-			w: e.size.w,
-			h: e.size.h
+			x: pos.x,
+			y: pos.y,
+			w: size.w,
+			h: size.h
 		};
 		var x = Std.int(rect.x / tsize);
 		var y = Std.int(rect.y / tsize);
@@ -62,50 +57,136 @@ class UpdateTileCollision implements ISystem {
 		
 		for (iy in y...maxY)
 		for (ix in x...maxX) {
-			if (lvl.getProps(1, ix, iy).collide) {
-				block(ix, iy, e, dir);
-				e.coll.state = true;
-				collide = true;
-			}
+			var tile = lvl.getProps(1, ix, iy);
+			if (tile.collide) block(ix, iy, coll, pos, size, speed, dir, tile.type);
 		}
-		
-		return collide;
 	}
 	
-	inline function block(ix:Int, iy:Int, e:{coll:Collision, pos:Position, size:Size, speed:Speed, gr:Gravity}, dir:Int):Void {
-		var rect:Rect = {
-			x: e.pos.x,
-			y: e.pos.y,
-			w: e.size.w,
-			h: e.size.h
-		};
-		var speed = e.speed;
+	inline function block(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int, slope:Slope):Void {
+		switch (slope) {
+		case Slope.FULL: FULL(ix, iy, coll, pos, size, speed, dir);
+		case Slope.HALF_BOTTOM: HALF_BOTTOM(ix, iy, coll, pos, size, speed, dir);
+		case Slope.HALF_TOP: HALF_TOP(ix, iy, coll, pos, size, speed, dir);
+		case Slope.HALF_LEFT: HALF_LEFT(ix, iy, coll, pos, size, speed, dir);
+		case Slope.HALF_RIGHT: HALF_RIGHT(ix, iy, coll, pos, size, speed, dir);
+		case HALF_BOTTOM_LEFT: HALF_BOTTOM_LEFT(ix, iy, coll, pos, size, speed, dir);
+		case HALF_BOTTOM_RIGHT: HALF_BOTTOM_RIGHT(ix, iy, coll, pos, size, speed, dir);
+		case HALF_TOP_LEFT: HALF_TOP_LEFT(ix, iy, coll, pos, size, speed, dir);
+		case HALF_TOP_RIGHT: HALF_TOP_RIGHT(ix, iy, coll, pos, size, speed, dir);
+		default: trace(slope);
+		}
+	}
 	
-		if (dir == 0) { //x-motion
-			if (speed.x > 0) { //right
-				e.coll.right = true;
-				rect.x = ix * tsize - rect.w;
-				speed.x = 0;
-			} else if (speed.x < 0) { //left
-				e.coll.left = true;
-				rect.x = ix * tsize + tsize;
-				speed.x = 0;
-			}
-		} else if (dir == 1) { //y-motion
-			if (speed.y > 0) { //down
-				e.coll.down = true;
-				rect.y = iy * tsize - rect.h;
+	inline function tileLeft(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed) {
+		coll.state = true;
+		coll.left = true;
+		pos.x = ix * tsize + tsize;
+		speed.x = 0;
+	}
+	
+	inline function tileRight(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed) {
+		coll.state = true;
+		coll.right = true;
+		pos.x = ix * tsize - size.w;
+		speed.x = 0;
+	}
+	
+	inline function tileBottom(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed) {
+		coll.state = true;
+		coll.down = true;
+		pos.y = iy * tsize - size.h;
+		speed.y = 0;
+	}
+	
+	inline function tileTop(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed) {
+		coll.state = true;
+		coll.up = true;
+		pos.y = iy * tsize + tsize;
+		speed.y = 0;
+	}
+	
+	inline function FULL(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+		if (dir == 0) {
+			if (speed.x < 0) tileLeft(ix, iy, coll, pos, size, speed);
+			else if (speed.x > 0) tileRight(ix, iy, coll, pos, size, speed);
+		} else if (dir == 1) {
+			if (speed.y > 0) tileBottom(ix, iy, coll, pos, size, speed);
+			else if (speed.y < 0) tileTop(ix, iy, coll, pos, size, speed);
+		}
+	}
+	
+	inline function HALF_BOTTOM(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+		if (pos.y + size.h > iy * tsize + tsize/2)
+		if (dir == 0) {
+			if (speed.x < 0) tileLeft(ix, iy, coll, pos, size, speed);
+			else if (speed.x > 0) tileRight(ix, iy, coll, pos, size, speed);
+		} else if (dir == 1) {
+			if (speed.y > 0) {
+				coll.state = true;
+				coll.down = true;
+				pos.y = iy * tsize + tsize/2 - size.h;
 				speed.y = 0;
-			} else if (speed.y < 0) { //up
-				e.coll.up = false;
-				rect.y = iy * tsize + tsize;
+			} else if (speed.y < 0) tileTop(ix, iy, coll, pos, size, speed);
+		}
+	}
+	
+	inline function HALF_TOP(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+		if (pos.y < iy * tsize + tsize/2)
+		if (dir == 0) {
+			if (speed.x < 0) tileLeft(ix, iy, coll, pos, size, speed);
+			else if (speed.x > 0) tileRight(ix, iy, coll, pos, size, speed);
+		} else if (dir == 1) {
+			if (speed.y > 0) tileBottom(ix, iy, coll, pos, size, speed);
+			else if (speed.y < 0) {
+				coll.state = true;
+				coll.up = true;
+				pos.y = iy * tsize + tsize/2;
 				speed.y = 0;
 			}
 		}
-		e.pos.x = rect.x;
-		e.pos.y = rect.y;
-		e.size.w = rect.w;
-		e.size.h = rect.h;
+	}
+	
+	inline function HALF_LEFT(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+		if (pos.x < ix * tsize + tsize/2)
+		if (dir == 0) {
+			if (speed.x < 0) {
+				coll.state = true;
+				coll.left = true;
+				pos.x = ix * tsize + tsize/2;
+				speed.x = 0;
+			} else if (speed.x > 0) tileRight(ix, iy, coll, pos, size, speed);
+		} else if (dir == 1) {
+			if (speed.y > 0) tileBottom(ix, iy, coll, pos, size, speed);
+			else if (speed.y < 0) tileTop(ix, iy, coll, pos, size, speed);
+		}
+	}
+	
+	inline function HALF_RIGHT(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+		if (pos.x + size.w > ix * tsize + tsize/2)
+		if (dir == 0) {
+			if (speed.x < 0) tileLeft(ix, iy, coll, pos, size, speed);
+			else if (speed.x > 0) {
+				coll.state = true;
+				coll.right = true;
+				pos.x = ix * tsize + tsize/2 - size.w;
+				speed.x = 0;
+			}
+		} else if (dir == 1) {
+			if (speed.y > 0) tileBottom(ix, iy, coll, pos, size, speed);
+			else if (speed.y < 0) tileTop(ix, iy, coll, pos, size, speed);
+		}
+	}
+	
+	inline function HALF_BOTTOM_LEFT(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+	}
+	
+	inline function HALF_BOTTOM_RIGHT(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+	}
+	
+	inline function HALF_TOP_LEFT(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+	}
+	
+	inline function HALF_TOP_RIGHT(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
 	}
 	
 }

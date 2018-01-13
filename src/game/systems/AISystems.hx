@@ -35,7 +35,8 @@ class UpdateAIControl implements ISystem {
 				}
 				
 			} else if (side != 0) { //tile collision
-				if (canJumpOver(pos.x + side * tsize, pos.y)) startJump(keys);
+				var sizeW = side == 1 ? size.w : 0;
+				if (canJumpOver(pos.x + sizeW + side, pos.y)) startJump(keys);
 				else setMoveDirection(keys, side);
 			}
 		

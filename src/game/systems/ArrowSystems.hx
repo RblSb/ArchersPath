@@ -45,17 +45,15 @@ class UpdateArrowCollision implements ISystem {
 
 class UpdateArrows implements ISystem {
 	
+	var tsize(get, never):Int;
+	function get_tsize() return Game.lvl.tsize;
+	var lvl(get, never):Lvl;
+	function get_lvl() return Game.lvl;
 	var targets:View<{pos:Position, size:Size}>;
 	
 	function update(arrow:Arrow, coll:Collision, pos:Position, speed:Speed, gr:Gravity):Void {
 		if (pos.fixed) return;
 		if (coll.state) {
-			pos.x -= speed.x;
-			pos.y -= speed.y;
-			/*speed.x = 0;
-			speed.y = 0;
-			gr.x = 0;
-			gr.y = 0;*/
 			pos.fixed = true;
 			arrow.ang = Math.atan2(arrow.lastSpeedY, arrow.lastSpeedX);
 			if (arrow.lastSpeedX > 0) pos.x++;
@@ -83,8 +81,6 @@ class RenderArrows implements ISystem {
 	public function update(arrow:Arrow, pos:Position, size:Size, speed:Speed):Void {
 		var x = pos.x + camera.x;
 		var y = pos.y + camera.y;
-		//var sx = pos.fixed ? arrow.lastSpeedX : speed.x;
-		//var sy = pos.fixed ? arrow.lastSpeedY : speed.y;
 		var sx = arrow.lastSpeedX;
 		var sy = arrow.lastSpeedY;
 		if (!pos.fixed) arrow.ang = Math.atan2(sy, sx);
