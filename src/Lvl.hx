@@ -25,67 +25,98 @@ private typedef Props = {
 	?frames:Array<Props>
 }
 
-/*@:enum
-abstract Slope(Int) {
-	var NONE = -1;
-	var FULL = 0;
-	var HALF_BOTTOM = 1;
-	var HALF_TOP = 2;
-	var HALF_LEFT = 3;
-	var HALF_RIGHT = 4;
-	var HALF_BOTTOM_LEFT = 5;
-	var HALF_BOTTOM_RIGHT = 6;
-	var HALF_TOP_LEFT = 7;
-	var HALF_TOP_RIGHT = 8;
-}*/
-
 @:enum
 abstract Slope(Int) from Int to Int {
+	
 	public static inline var NONE = -1;
 	public static inline var FULL = 0;
-	public static inline var HALF_BOTTOM = 1;
-	public static inline var HALF_TOP = 2;
-	public static inline var HALF_LEFT = 3;
-	public static inline var HALF_RIGHT = 4;
-	public static inline var HALF_BOTTOM_LEFT = 5;
-	public static inline var HALF_BOTTOM_RIGHT = 6;
-	public static inline var HALF_TOP_LEFT = 7;
-	public static inline var HALF_TOP_RIGHT = 8;
+	public static inline var HALF_B = 1;
+	public static inline var HALF_T = 2;
+	public static inline var HALF_L = 3;
+	public static inline var HALF_R = 4;
+	public static inline var HALF_BL = 5;
+	public static inline var HALF_BR = 6;
+	public static inline var HALF_TL = 7;
+	public static inline var HALF_TR = 8;
+	public static inline var QUARTER_BL = 9;
+	public static inline var QUARTER_BR = 10;
+	public static inline var QUARTER_TL = 11;
+	public static inline var QUARTER_TR = 12;
+	
 	@:from public static function fromString(type:String):Slope {
-		//trace(haxe.EnumTools.getConstructors(Slope));
-		//EnumValueTools.getName()
 		return new Slope(switch(type) {
 		case "NONE": NONE;
 		case "FULL": FULL;
-		case "HALF_BOTTOM": HALF_BOTTOM;
-		case "HALF_TOP": HALF_TOP;
-		case "HALF_LEFT": HALF_LEFT;
-		case "HALF_RIGHT": HALF_RIGHT;
-		case "HALF_BOTTOM_LEFT": HALF_BOTTOM_LEFT;
-		case "HALF_BOTTOM_RIGHT": HALF_BOTTOM_RIGHT;
-		case "HALF_TOP_LEFT": HALF_TOP_LEFT;
-		case "HALF_TOP_RIGHT": HALF_TOP_RIGHT;
+		case "HALF_B": HALF_B;
+		case "HALF_T": HALF_T;
+		case "HALF_L": HALF_L;
+		case "HALF_R": HALF_R;
+		case "HALF_BL": HALF_BL;
+		case "HALF_BR": HALF_BR;
+		case "HALF_TL": HALF_TL;
+		case "HALF_TR": HALF_TR;
+		case "QUARTER_BL": QUARTER_BL;
+		case "QUARTER_BR": QUARTER_BR;
+		case "QUARTER_TL": QUARTER_TL;
+		case "QUARTER_TR": QUARTER_TR;
 		default: NONE;
 		});
 	}
+	
 	public inline function new(type:Slope) {
 		this = type;
 	}
+	
 	public static function rotate(type:Slope):Slope {
 		return new Slope(switch(type) {
-			case NONE: NONE;
-			case FULL: FULL;
-			case HALF_BOTTOM: HALF_LEFT;
-			case HALF_TOP: HALF_RIGHT;
-			case HALF_LEFT: HALF_TOP;
-			case HALF_RIGHT: HALF_BOTTOM;
-			case HALF_BOTTOM_LEFT: HALF_TOP_LEFT;
-			case HALF_BOTTOM_RIGHT: HALF_BOTTOM_LEFT;
-			case HALF_TOP_LEFT: HALF_TOP_RIGHT;
-			case HALF_TOP_RIGHT: HALF_BOTTOM_RIGHT;
-			default: NONE;
+			case HALF_B: HALF_L;
+			case HALF_T: HALF_R;
+			case HALF_L: HALF_T;
+			case HALF_R: HALF_B;
+			case HALF_BL: HALF_TL;
+			case HALF_BR: HALF_BL;
+			case HALF_TL: HALF_TR;
+			case HALF_TR: HALF_BR;
+			case QUARTER_BL: QUARTER_TL;
+			case QUARTER_BR: QUARTER_BL;
+			case QUARTER_TL: QUARTER_TR;
+			case QUARTER_TR: QUARTER_BR;
+			default: type;
 		});
 	}
+	
+	public static function flipX(type:Slope):Slope {
+		return new Slope(switch(type) {
+			case HALF_L: HALF_R;
+			case HALF_R: HALF_L;
+			case HALF_BL: HALF_BR;
+			case HALF_BR: HALF_BL;
+			case HALF_TL: HALF_TR;
+			case HALF_TR: HALF_TL;
+			case QUARTER_BL: QUARTER_BR;
+			case QUARTER_BR: QUARTER_BL;
+			case QUARTER_TL: QUARTER_TR;
+			case QUARTER_TR: QUARTER_TL;
+			default: type;
+		});
+	}
+	
+	public static function flipY(type:Slope):Slope {
+		return new Slope(switch(type) {
+			case HALF_B: HALF_T;
+			case HALF_T: HALF_B;
+			case HALF_BL: HALF_TL;
+			case HALF_BR: HALF_TR;
+			case HALF_TL: HALF_BL;
+			case HALF_TR: HALF_BR;
+			case QUARTER_BL: QUARTER_TL;
+			case QUARTER_BR: QUARTER_TR;
+			case QUARTER_TL: QUARTER_BL;
+			case QUARTER_TR: QUARTER_BR;
+			default: type;
+		});
+	}
+	
 }
 
 typedef GameMap = { //map format
@@ -692,10 +723,8 @@ private class TilesetGenerator {
 		case "rotate90": tile.type = Slope.rotate(tile.type);
 		case "rotate180": for (i in 0...2) tile.type = Slope.rotate(tile.type);
 		case "rotate270": for (i in 0...3) tile.type = Slope.rotate(tile.type);
-		case "flipX": //tile.type = Slope.flipX(tile.type);
-			for (i in 0...2) tile.type = Slope.rotate(tile.type);
-		case "flipY": //tile.type = Slope.flipY(tile.type);
-			for (i in 0...2) tile.type = Slope.rotate(tile.type);
+		case "flipX": tile.type = Slope.flipX(tile.type);
+		case "flipY": tile.type = Slope.flipY(tile.type);
 		default: throw("incorrect sloped props: " + type);
 		}
 	}

@@ -65,14 +65,18 @@ class UpdateTileCollision implements ISystem {
 	inline function block(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int, slope:Slope):Void {
 		switch (slope) {
 		case Slope.FULL: FULL(ix, iy, coll, pos, size, speed, dir);
-		case Slope.HALF_BOTTOM: HALF_BOTTOM(ix, iy, coll, pos, size, speed, dir);
-		case Slope.HALF_TOP: HALF_TOP(ix, iy, coll, pos, size, speed, dir);
-		case Slope.HALF_LEFT: HALF_LEFT(ix, iy, coll, pos, size, speed, dir);
-		case Slope.HALF_RIGHT: HALF_RIGHT(ix, iy, coll, pos, size, speed, dir);
-		case HALF_BOTTOM_LEFT: HALF_BOTTOM_LEFT(ix, iy, coll, pos, size, speed, dir);
-		case HALF_BOTTOM_RIGHT: HALF_BOTTOM_RIGHT(ix, iy, coll, pos, size, speed, dir);
-		case HALF_TOP_LEFT: HALF_TOP_LEFT(ix, iy, coll, pos, size, speed, dir);
-		case HALF_TOP_RIGHT: HALF_TOP_RIGHT(ix, iy, coll, pos, size, speed, dir);
+		case Slope.HALF_B: HALF_B(ix, iy, coll, pos, size, speed, dir);
+		case Slope.HALF_T: HALF_T(ix, iy, coll, pos, size, speed, dir);
+		case Slope.HALF_L: HALF_L(ix, iy, coll, pos, size, speed, dir);
+		case Slope.HALF_R: HALF_R(ix, iy, coll, pos, size, speed, dir);
+		case HALF_BL: HALF_BL(ix, iy, coll, pos, size, speed, dir);
+		case HALF_BR: HALF_BR(ix, iy, coll, pos, size, speed, dir);
+		case HALF_TL: HALF_TL(ix, iy, coll, pos, size, speed, dir);
+		case HALF_TR: HALF_TR(ix, iy, coll, pos, size, speed, dir);
+		case QUARTER_BL: QUARTER_BL(ix, iy, coll, pos, size, speed, dir);
+		case QUARTER_BR: QUARTER_BR(ix, iy, coll, pos, size, speed, dir);
+		case QUARTER_TL: QUARTER_TL(ix, iy, coll, pos, size, speed, dir);
+		case QUARTER_TR: QUARTER_TR(ix, iy, coll, pos, size, speed, dir);
 		default: trace(slope);
 		}
 	}
@@ -115,7 +119,7 @@ class UpdateTileCollision implements ISystem {
 		}
 	}
 	
-	inline function HALF_BOTTOM(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+	inline function HALF_B(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
 		if (pos.y + size.h > iy * tsize + tsize/2)
 		if (dir == 0) {
 			if (speed.x < 0) tileLeft(ix, iy, coll, pos, size, speed);
@@ -130,7 +134,7 @@ class UpdateTileCollision implements ISystem {
 		}
 	}
 	
-	inline function HALF_TOP(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+	inline function HALF_T(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
 		if (pos.y < iy * tsize + tsize/2)
 		if (dir == 0) {
 			if (speed.x < 0) tileLeft(ix, iy, coll, pos, size, speed);
@@ -146,7 +150,7 @@ class UpdateTileCollision implements ISystem {
 		}
 	}
 	
-	inline function HALF_LEFT(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+	inline function HALF_L(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
 		if (pos.x < ix * tsize + tsize/2)
 		if (dir == 0) {
 			if (speed.x < 0) {
@@ -161,7 +165,7 @@ class UpdateTileCollision implements ISystem {
 		}
 	}
 	
-	inline function HALF_RIGHT(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+	inline function HALF_R(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
 		if (pos.x + size.w > ix * tsize + tsize/2)
 		if (dir == 0) {
 			if (speed.x < 0) tileLeft(ix, iy, coll, pos, size, speed);
@@ -176,17 +180,101 @@ class UpdateTileCollision implements ISystem {
 			else if (speed.y < 0) tileTop(ix, iy, coll, pos, size, speed);
 		}
 	}
-	
-	inline function HALF_BOTTOM_LEFT(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+	//TODO implement triangle collision
+	inline function HALF_BL(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
 	}
 	
-	inline function HALF_BOTTOM_RIGHT(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+	inline function HALF_BR(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
 	}
 	
-	inline function HALF_TOP_LEFT(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+	inline function HALF_TL(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
 	}
 	
-	inline function HALF_TOP_RIGHT(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+	inline function HALF_TR(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+	}
+	
+	inline function QUARTER_BL(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+		if (pos.x < ix * tsize + tsize/2)
+		if (pos.y + size.h > iy * tsize + tsize/2)
+		if (dir == 0) {
+			if (speed.x < 0) {
+				coll.state = true;
+				coll.left = true;
+				pos.x = ix * tsize + tsize/2;
+				speed.x = 0;
+			} else if (speed.x > 0) tileRight(ix, iy, coll, pos, size, speed);
+		} else if (dir == 1) {
+			if (speed.y > 0) {
+				coll.state = true;
+				coll.down = true;
+				pos.y = iy * tsize + tsize/2 - size.h;
+				speed.y = 0;
+			} else if (speed.y < 0) tileTop(ix, iy, coll, pos, size, speed);
+		}
+	}
+	
+	inline function QUARTER_BR(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+		if (pos.x + size.w > ix * tsize + tsize/2)
+		if (pos.y + size.h > iy * tsize + tsize/2)
+		if (dir == 0) {
+			if (speed.x < 0) tileLeft(ix, iy, coll, pos, size, speed);
+			else if (speed.x > 0) {
+				coll.state = true;
+				coll.right = true;
+				pos.x = ix * tsize + tsize/2 - size.w;
+				speed.x = 0;
+			}
+		} else if (dir == 1) {
+			if (speed.y > 0) {
+				coll.state = true;
+				coll.down = true;
+				pos.y = iy * tsize + tsize/2 - size.h;
+				speed.y = 0;
+			} else if (speed.y < 0) tileTop(ix, iy, coll, pos, size, speed);
+		}
+	}
+	
+	inline function QUARTER_TL(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+		if (pos.x < ix * tsize + tsize/2)
+		if (pos.y < iy * tsize + tsize/2)
+		if (dir == 0) {
+			if (speed.x < 0) {
+				coll.state = true;
+				coll.left = true;
+				pos.x = ix * tsize + tsize/2;
+				speed.x = 0;
+			} else if (speed.x > 0) tileRight(ix, iy, coll, pos, size, speed);
+		} else if (dir == 1) {
+			if (speed.y > 0) tileBottom(ix, iy, coll, pos, size, speed);
+			else if (speed.y < 0) {
+				coll.state = true;
+				coll.up = true;
+				pos.y = iy * tsize + tsize/2;
+				speed.y = 0;
+			}
+		}
+	}
+	
+	inline function QUARTER_TR(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int) {
+		if (pos.x + size.w > ix * tsize + tsize/2)
+		if (pos.y < iy * tsize + tsize/2)
+		if (dir == 0) {
+			if (speed.x < 0) tileLeft(ix, iy, coll, pos, size, speed);
+			else if (speed.x > 0) {
+				coll.state = true;
+				coll.right = true;
+				pos.x = ix * tsize + tsize/2 - size.w;
+				speed.x = 0;
+			}
+		} else if (dir == 1) {
+			if (speed.y > 0) tileBottom(ix, iy, coll, pos, size, speed);
+			else if (speed.y < 0) {
+				coll.state = true;
+				coll.up = true;
+				pos.y = iy * tsize + tsize/2;
+				speed.y = 0;
+			}
+		}
 	}
 	
 }

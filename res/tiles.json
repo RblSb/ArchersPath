@@ -36,7 +36,7 @@
 			{
 				"file": "grass_tl",
 				"add": ["flipX"],
-				"type": "HALF_RIGHT",
+				"type": "HALF_R",
 				"collide": true,
 				"permeable": false
 			},
@@ -68,7 +68,7 @@
 			{
 				"file": "ground_tl",
 				"add": ["flipX"],
-				"type": "HALF_RIGHT",
+				"type": "HALF_R",
 				"collide": true,
 				"permeable": false
 			},
@@ -81,14 +81,14 @@
 			{
 				"file": "ground_l",
 				"add": ["flipX"],
-				"type": "HALF_RIGHT",
+				"type": "HALF_R",
 				"collide": true,
 				"permeable": false
 			},
 			{
 				"file": "ground_tl_bg",
 				"add": ["flipX"],
-				"type": "HALF_RIGHT",
+				"type": "HALF_R",
 				"collide": true,
 				"permeable": false
 			},
@@ -101,13 +101,13 @@
 			{
 				"file": "ground_bl",
 				"add": ["flipX"],
-				"type": "HALF_TOP_RIGHT",
-				"collide": true,
+				"type": "QUARTER_TR",
+				"collide": false,
 				"permeable": false
 			},
 			{
 				"file": "ground_b",
-				"type": "HALF_BOTTOM",
+				"type": "HALF_T",
 				"collide": true,
 				"permeable": false
 			},
@@ -128,7 +128,7 @@
 			},
 			{
 				"file": "bridge",
-				"type": "HALF_TOP",
+				"type": "HALF_T",
 				"collide": true,
 				"permeable": false
 			},
