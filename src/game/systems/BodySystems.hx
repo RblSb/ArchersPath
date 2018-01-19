@@ -1,6 +1,7 @@
 package game.systems;
 
 import kha.graphics2.Graphics;
+import kha.Assets;
 import edge.ISystem;
 import edge.Entity;
 import edge.View;
@@ -36,12 +37,20 @@ class UpdateBodyCollision implements ISystem {
 	
 	var targets:View<{body:Body, coll:Collision, pos:Position, size:Size, life:Life}>;
 	var entity:Entity;
+	var game:Game;
+	
+	public function new(game:Game) {
+		this.game = game;
+	}
 	
 	function update(body:Body, coll:Collision, pos:Position, size:Size, speed:Speed, life:Life) {
 		if (pos.fixed) return;
 		if (life.damageSkip != 0) life.damageSkip--;
 		if (!life.alive) {
-			if (entity.existsType(AI)) entity.remove(entity.get(AI));
+			if (entity.existsType(AI)) {
+				entity.remove(entity.get(AI));
+				for (i in 0...3) createCoin(pos);
+			}
 			if (entity.existsType(Player)) entity.remove(entity.get(Player));
 			//entity.remove(ai);
 			//entity.destroy();
@@ -63,6 +72,19 @@ class UpdateBodyCollision implements ISystem {
 		}
 	}
 	
+	inline function createCoin(pos:Position) {
+		game.engine.create([
+			new Coin(),
+			new Body(),
+			new Collision(),
+			new Sprite(Assets.images.coins, 15, 15),
+			new Position(pos.x, pos.y),
+			new Size(15, 15),
+			new Speed(1 - Math.random() * 2, Math.random() * -3),
+			new Gravity(0, 0.1),
+			new Life(true)
+		]);
+	}
 }
 
 class RenderBodies implements ISystem {

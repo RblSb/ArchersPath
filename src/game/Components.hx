@@ -84,11 +84,7 @@ class Lifebar implements IComponent {}
 
 class Player implements IComponent {}
 
-class AI implements IComponent {
-	/*var dir = -1;
-	var jump = false;
-	public function new() {};*/
-}
+class AI implements IComponent {}
 
 class Control implements IComponent {
 	var keys:Map<Int, Bool>;
@@ -122,12 +118,21 @@ class Arrow implements IComponent {
 	}
 }
 
+class Coin implements IComponent {
+	var frame = 0;
+	var lastSpeed:Point = {x: 0, y: 0};
+	
+	public function new(?player:Entity) {
+		//this.player = player;
+	}
+}
+
 class Sprite implements IComponent {
 	var img:Image;
 	var setW:Int;
 	var w:Int;
 	var h:Int;
-	var frame:Int;
+	var frame = 0;
 	var sets:Map<String, Array<Int>>;
 	
 	var dir = 1;
@@ -137,13 +142,20 @@ class Sprite implements IComponent {
 	var frameTypeId:Int;
 	var animCounter = 0;
 	
-	public function new(img:Image, w:Int, h:Int, frame:Int, sets) {
+	public function new(img:Image, w:Int, h:Int, ?sets) {
 		this.img = img;
 		this.w = w;
 		this.h = h;
-		this.frame = frame;
-		this.sets = sets;
 		this.setW = Std.int(img.width / w);
+		if (sets != null) this.sets = sets;
+		else {
+			var setH = Std.int(img.height / h);
+			var type = "anim";
+			this.sets = [
+				type => [for (i in 0...setW*setH) i]
+			];
+			setAnimType(type);
+		}
 	}
 	
 	public inline function setAnimType(type:String):Void {

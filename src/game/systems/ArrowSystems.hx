@@ -33,8 +33,10 @@ class UpdateArrowCollision implements ISystem {
 				continue;
 			}
 			if (e.life.alive) {
-				e.life.damage(5);
-				entity.destroy();
+				if (item.entity.existsType(AI) || item.entity.existsType(Player)) {
+					e.life.damage(5);
+					entity.destroy();
+				}
 			}
 		}
 		//if arrow still in player

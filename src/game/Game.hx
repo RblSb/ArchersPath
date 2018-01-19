@@ -8,6 +8,7 @@ import game.systems.BodySystems;
 import game.systems.PlayerSystems;
 import game.systems.AISystems;
 import game.systems.ArrowSystems;
+import game.systems.CoinSystems;
 import game.Components;
 import editor.Editor;
 
@@ -65,7 +66,7 @@ class Game extends Screen {
 			new Control(keys, pointers),
 			new Body(),
 			new Collision(),
-			new Sprite(Assets.images.player, 32, 32, 0, frameSets),
+			new Sprite(Assets.images.player, 32, 32, frameSets),
 			new Position(spawn.x * lvl.tsize+lvl.tsize*18, spawn.y * lvl.tsize),
 			new Size(Std.int(lvl.tsize/2), lvl.tsize - 1),
 			new Speed(0, 0),
@@ -80,7 +81,7 @@ class Game extends Screen {
 			new Control(new Map(), new Map()),
 			new Body(),
 			new Collision(),
-			new Sprite(Assets.images.Imp, 32, 32, 0, frameSets),
+			new Sprite(Assets.images.Imp, 32, 32, frameSets),
 			new Position((spawn.x+10) * lvl.tsize, spawn.y * lvl.tsize),
 			new Size(Std.int(lvl.tsize/2), 18),
 			new Speed(0, 0),
@@ -93,7 +94,7 @@ class Game extends Screen {
 			new Control(new Map(), new Map()),
 			new Body(),
 			new Collision(),
-			new Sprite(Assets.images.GreyMinotaur, 48, 48, 0, frameSets),
+			new Sprite(Assets.images.GreyMinotaur, 48, 48, frameSets),
 			new Position((spawn.x+6) * lvl.tsize, spawn.y * lvl.tsize),
 			new Size(Std.int(lvl.tsize/1.5), lvl.tsize),
 			new Speed(0, 0),
@@ -106,7 +107,7 @@ class Game extends Screen {
 			new Control(new Map(), new Map()),
 			new Body(),
 			new Collision(),
-			new Sprite(Assets.images.HunterOrc, 32, 32, 0, frameSets),
+			new Sprite(Assets.images.HunterOrc, 32, 32, frameSets),
 			new Position((spawn.x+6) * lvl.tsize, spawn.y * lvl.tsize),
 			new Size(Std.int(lvl.tsize/2), lvl.tsize),
 			new Speed(0, 0),
@@ -116,14 +117,17 @@ class Game extends Screen {
 		
 		updatePhase.add(new UpdateGravitation());
 		updatePhase.add(new UpdateTileCollision());
-		updatePhase.add(new UpdateBodyCollision());
+		updatePhase.add(new UpdateBodyCollision(this));
 		updatePhase.add(new UpdateArrowCollision());
+		updatePhase.add(new UpdateCoinCollision());
+		
 		updatePhase.add(new UpdatePlayerAnimation());
 		updatePhase.add(new UpdateAIAnimation());
 		updatePhase.add(new UpdatePosition());
 		
 		updatePhase.add(new UpdateBodyPhysic());
 		updatePhase.add(new UpdateArrows());
+		updatePhase.add(new UpdateCoins());
 		updatePhase.add(new UpdatePlayerControl());
 		updatePhase.add(new UpdateAIControl());
 		updatePhase.add(new UpdatePlayerAim(this));
@@ -131,13 +135,17 @@ class Game extends Screen {
 		
 		renderPhase.add(new RenderBG());
 		renderPhase.add(new RenderMapBG());
-		//renderPhase.add(new RenderArrows());
 		renderPhase.add(new RenderMapTG());
 		renderPhase.add(new RenderBodies());
 		renderPhase.add(new RenderArrows());
+		//renderPhase.add(new RenderCoins());
 		renderPhase.add(new RenderAimLine());
 		
 		renderPhase.add(new RenderPlayerLifebar());
+	}
+	
+	override function onResize():Void {
+		lvl.resize();
 	}
 	
 	override function onKeyDown(key:KeyCode):Void {

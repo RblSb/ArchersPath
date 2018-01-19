@@ -9,20 +9,11 @@ import Types.IPoint;
 import Types.Point;
 import Types.Rect;
 
-private typedef Tiles = { //tiles.json
-	tsize:Int,
-	scale:Float,
-	layers:Array<Array<Props>>
-}
-
 private typedef Props = {
 	id:Int,
 	collide:Bool,
 	type:Slope,
-	permeable:Bool,
-	?file:String,
-	?add:Array<String>,
-	?frames:Array<Props>
+	permeable:Bool
 }
 
 @:enum
@@ -185,7 +176,7 @@ class Lvl {
 	
 	function initTiles():Void {
 		var text = Assets.blobs.tiles_json.toString();
-		var json:Tiles = haxe.Json.parse(text);
+		var json:TSTiles = haxe.Json.parse(text);
 		
 		var ts = new TilesetGenerator(json);
 		origTsize = tsize = ts.tsize;
@@ -514,6 +505,22 @@ class Lvl {
 	
 }
 
+private typedef TSTiles = { //tiles.json
+	tsize:Int,
+	scale:Float,
+	layers:Array<Array<TSProps>>
+}
+
+private typedef TSProps = {
+	?id:Int,
+	?collide:Bool,
+	?type:String,
+	?permeable:Bool,
+	?file:String,
+	?add:Array<String>,
+	?frames:Array<TSProps>
+}
+
 private class TilesetGenerator {
 	
 	public var tilesOffset:Array<Int>;
@@ -532,7 +539,7 @@ private class TilesetGenerator {
 	var x = 0;
 	var y = 0;
 	
-	public function new(json:Tiles):Void {
+	public function new(json:TSTiles):Void {
 		var layers = json.layers;
 		for (layer in layers)
 			for (id in 0...layer.length)
@@ -545,7 +552,7 @@ private class TilesetGenerator {
 		spritesLink = []; //tile to first frame links
 		spritesOffset = []; //offsets in sprites range 
 		layersOffset = [0]; //offsets in layers range
-		props = []; //json props for every tile/sprite
+		props = []; //props for every tile/sprite
 		
 		tilesetW = Math.ceil(Math.sqrt(tilesNum));
 		tilesetH = Math.ceil(tilesNum / tilesetW);
@@ -564,7 +571,7 @@ private class TilesetGenerator {
 			for (tile in layer) {
 				var bmd = loadTile(l, tile.file);
 				drawTile(g, bmd, 0);
-				props[l].push(tile);
+				addProps(l, tile);
 				tilesN++;
 				
 				for (add in tile.add) switch(add) {
@@ -572,18 +579,15 @@ private class TilesetGenerator {
 					for (i in 1...4) {
 						drawRotatedTile(g, bmd, 0, i * 90);
 						addSlopedProps(l, tile, add + (i * 90));
-						//props[l].push(tile);
 						tilesN++;
 					}
 				case "flipX":
 					drawFlipXTile(g, bmd, 0);
 					addSlopedProps(l, tile, add);
-					//props[l].push(tile);
 					tilesN++;
 				case "flipY":
 					drawFlipYTile(g, bmd, 0);
 					addSlopedProps(l, tile, add);
-					//props[l].push(tile);
 					tilesN++;
 				default:
 				}
@@ -643,18 +647,16 @@ private class TilesetGenerator {
 		g.end();
 	}
 	
-	inline function fillProps(tile:Props, id:Int):Void {
-		tile.id = id + 1;
+	inline function fillProps(tile:TSProps, id:Int):Void {
+		if (tile.id == null) tile.id = id + 1; //skip id 0
 		if (tile.file == null) tile.file = "" + tile.id;
 		if (tile.add == null) tile.add = [];
 		if (tile.collide == null) tile.collide = false;
-		if (tile.type == null) {
-			tile.type = tile.collide ? Slope.FULL : Slope.NONE;
-		} else tile.type = cast(tile.type, String); //fix separate props
+		if (tile.type == null) tile.type = tile.collide ? "FULL" : "NONE";
 		if (tile.permeable == null) tile.permeable = true;
 	}
 	
-	inline function countTiles(layers:Array<Array<Props>>):Int {
+	inline function countTiles(layers:Array<Array<TSProps>>):Int {
 		var count = 1;
 		for (l in 0...layersNum) {
 			var layer = layers[l];
@@ -673,8 +675,8 @@ private class TilesetGenerator {
 	}
 	
 	inline function loadTile(layer:Int, file:String):Image {
-		var ereg = ~/-/g;
-		file = ereg.replace(file, "_");
+		//var ereg = ~/-/g;
+		//file = ereg.replace(file, "_");
 		return Reflect.field(Assets.images, "tiles_"+layer+"_"+file);
 	}
 	
@@ -716,9 +718,19 @@ private class TilesetGenerator {
 		spritesOffset[l].push(spritesOffset[l][len] + frames - 1);
 	}
 	
-	inline function addSlopedProps(l:Int, tile:Props, type:String):Void {
-		var tile = Reflect.copy(tile);
-		props[l].push(tile);
+	inline function addProps(l:Int, tile:TSProps):Void {
+		props[l].push({
+			id: tile.id,
+			collide: tile.collide,
+			type: tile.type,
+			permeable: tile.permeable
+		});
+	}
+	
+	inline function addSlopedProps(l:Int, tile:TSProps, type:String):Void {
+		//var tile = Reflect.copy(tile);
+		addProps(l, tile);
+		var tile = props[l][props[l].length-1];
 		switch(type) {
 		case "rotate90": tile.type = Slope.rotate(tile.type);
 		case "rotate180": for (i in 0...2) tile.type = Slope.rotate(tile.type);
@@ -729,9 +741,9 @@ private class TilesetGenerator {
 		}
 	}
 	
-	inline function addFrameProps(l:Int, sprite:Props, id:Int):Void {
-		if (sprite.frames == null) props[l].push(sprite);
-		else props[l].push(sprite.frames[id-1]);
+	inline function addFrameProps(l:Int, sprite:TSProps, id:Int):Void {
+		if (sprite.frames == null) addProps(l, sprite);
+		else addProps(l, sprite.frames[id-1]);
 	}
 	
 }

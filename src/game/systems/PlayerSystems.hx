@@ -43,7 +43,7 @@ class UpdatePlayerAnimation implements ISystem {
 		if (left != right) sprite.dir = left ? 0 : 1;
 		
 		var pointer = control.pointers[0];
-		if (pointer.isDown && speed.x == 0) {
+		if (pointer.isDown && coll.down && speed.x == 0) {
 			var ang = Math.atan2(
 				pointer.y - pos.y - size.h/2 - 3 - camera.y,
 				pointer.x - pos.x - size.w/2 - camera.x

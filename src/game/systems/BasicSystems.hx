@@ -1,6 +1,8 @@
 package game.systems;
 
 import kha.graphics2.Graphics;
+import kha.Assets;
+import kha.Image;
 import edge.ISystem;
 import edge.View;
 import game.Components;
@@ -316,11 +318,63 @@ class RenderBG implements ISystem {
 	
 	var g(get, never):Graphics;
 	function get_g() return Screen.frame.g2;
+	var lvl(get, never):Lvl;
+	function get_lvl() return Game.lvl;
+	var camera(get, never):Point;
+	function get_camera() return Game.lvl.camera;
+	var cloudsX = 0.0;
 	
 	public function update():Void {
+		var max = lvl.h * lvl.tsize - Screen.h;
+		var offY = -max;
+		if (max > 0) {
+			var cy = camera.y > 0 ? max : -camera.y;
+			var size = Std.int(max / 5);
+			offY = -Math.round(size * 1.5 - cy / max * size);
+		}
+		
+		g.color = 0xFF9BF2EC;
+		g.fillRect(0, 0, Screen.w, Screen.h - offY);
+		g.color = 0xFF6BBAAB;
+		g.fillRect(0, Screen.h - offY, Screen.w, offY);
 		g.color = 0xFFFFFFFF;
-		//g.color = 0xFF9BF2EC;
-		g.fillRect(0, 0, Screen.w, Screen.h);
+		
+		var sea = Assets.images.bg_sea;
+		var y = Screen.h - sea.height - offY;
+		fillPatternX(sea, -Math.round(cloudsX), y);
+		
+		var sky = Assets.images.bg_sky;
+		y -= sky.height;
+		fillPatternX(sky, 0, y);
+		
+		var clouds = Assets.images.bg_clouds;
+		var y = Screen.h - sea.height - clouds.height - offY;
+		fillPatternX(clouds, Math.round(cloudsX), y);
+		cloudsX -= 0.1;
+		
+		/*g.font = Assets.fonts.OpenSans_Regular;
+		g.fontSize = 30;
+		g.drawString(""+offY, 0, 30);
+		g.drawString(""+camera.y, 0, 60);
+		g.drawString(""+lvl.h*lvl.tsize, 0, 90);*/
+	}
+	
+	inline function fillPatternX(img:Image, x:Int, y:Int) {
+		var len = Math.ceil(Screen.w / img.width);
+		var sx = -Math.ceil(x / img.width);
+		var ex = -Math.floor(x / img.width);
+		for (i in sx...len+ex) g.drawImage(img, x + i * img.width, y);
+		/*if (img == Assets.images.bg_clouds) {
+			g.color = 0xFFFF0000;
+			var n = 0;
+			for (i in sx...len+ex) {g.fillRect(n*12, 0, 10, 10);n++;}
+			g.font = Assets.fonts.OpenSans_Regular;
+			g.fontSize = 30;
+			g.drawString(""+sx, 0, 30);
+			g.drawString(""+ex, 0, 60);
+			g.drawString(""+(len+ex), 0, 90);
+			g.color = 0xFFFFFFFF;
+		}*/
 	}
 	
 }
@@ -331,7 +385,7 @@ class RenderMapBG implements ISystem {
 	function get_g() return Screen.frame.g2;
 	
 	public function update():Void {
-		Game.lvl.drawLayer(g, 0);
+		//Game.lvl.drawLayer(g, 0);
 	}
 	
 }
