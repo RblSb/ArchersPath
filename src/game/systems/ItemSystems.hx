@@ -10,7 +10,7 @@ import Types.Point;
 
 class UpdateCoinCollision implements ISystem {
 	
-	var targets:View<{player:Player, body:Body, pos:Position, size:Size, life:Life}>;
+	var targets:View<{player:Player, moneybar:Moneybar, body:Body, pos:Position, size:Size, life:Life}>;
 	var entity:Entity;
 	
 	function update(coin:Coin, pos:Position, size:Size, speed:Speed, life:Life):Void {
@@ -27,7 +27,7 @@ class UpdateCoinCollision implements ISystem {
 			)) continue;
 			
 			if (e.life.alive) {
-				//TODO add to player money
+				e.player.money++;
 				entity.destroy();
 			}
 		}
@@ -35,18 +35,42 @@ class UpdateCoinCollision implements ISystem {
 	
 }
 
-class UpdateCoins implements ISystem {
+class UpdateHpCollision implements ISystem {
+	
+	var targets:View<{player:Player, body:Body, pos:Position, size:Size, life:Life}>;
+	var entity:Entity;
+	
+	function update(hp:Hp, pos:Position, size:Size, speed:Speed, life:Life):Void {
+		if (!life.alive) {
+			entity.destroy();
+			return;
+		}
+		for (item in targets) {
+			if (entity == item.entity) continue;
+			var e = item.data;
+			if (!Utils.AABB(
+				{x: pos.x, y: pos.y, w: size.w, h: size.h},
+				{x: e.pos.x, y: e.pos.y, w: e.size.w, h: e.size.h}
+			)) continue;
+			
+			if (e.life.alive) {
+				e.life.heal(10);
+				entity.destroy();
+			}
+		}
+	}
+	
+}
+
+class UpdateItems implements ISystem {
 	
 	var tsize(get, never):Int;
 	function get_tsize() return Game.lvl.tsize;
 	var lvl(get, never):Lvl;
 	function get_lvl() return Game.lvl;
 	
-	function update(coin:Coin, sprite:Sprite, coll:Collision, pos:Position, speed:Speed, gr:Gravity):Void {
-		//coin.frame++;
-		//if (coin.frame > 5) coin.frame = 0;
+	function update(coin:Item, sprite:Sprite, coll:Collision, pos:Position, speed:Speed, gr:Gravity):Void {
 		var max = Math.abs(speed.x) > Math.abs(speed.y) ? Math.abs(speed.x) : Math.abs(speed.y);
-		//if (max < Math.abs(speed.y)) max = Math.abs(speed.y);
 		for (i in 0...Std.int(max)) sprite.playAnimType();
 		sprite.playAnimType();
 		
@@ -60,28 +84,3 @@ class UpdateCoins implements ISystem {
 	}
 	
 }
-
-/*class RenderCoins implements ISystem {
-
-	var g(get, never):Graphics;
-	function get_g() return Screen.frame.g2;
-	var camera(get, never):Point;
-	function get_camera() return Game.lvl.camera;
-	static inline var w = 15;
-	static inline var h = 15;
-
-	public function before():Void {
-		g.color = 0xFFFFFFFF;
-	}
-
-	public function update(coin:Coin, pos:Position, size:Size, speed:Speed):Void {
-		var img = Assets.images.coins;
-		g.drawSubImage(
-			img,
-			pos.x + camera.x, pos.y + camera.y,
-			coin.frame * w, 0,
-			size.w, size.h
-		);
-	}
-
-}*/

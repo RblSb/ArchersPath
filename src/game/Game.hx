@@ -8,7 +8,7 @@ import game.systems.BodySystems;
 import game.systems.PlayerSystems;
 import game.systems.AISystems;
 import game.systems.ArrowSystems;
-import game.systems.CoinSystems;
+import game.systems.ItemSystems;
 import game.Components;
 import editor.Editor;
 
@@ -73,6 +73,7 @@ class Game extends Screen {
 			new Gravity(0, 0.2),
 			new Life(true, 30),
 			new Lifebar(),
+			new Moneybar(),
 			new Bow()
 		]);
 		
@@ -120,6 +121,7 @@ class Game extends Screen {
 		updatePhase.add(new UpdateBodyCollision(this));
 		updatePhase.add(new UpdateArrowCollision());
 		updatePhase.add(new UpdateCoinCollision());
+		updatePhase.add(new UpdateHpCollision());
 		
 		updatePhase.add(new UpdatePlayerAnimation());
 		updatePhase.add(new UpdateAIAnimation());
@@ -127,7 +129,7 @@ class Game extends Screen {
 		
 		updatePhase.add(new UpdateBodyPhysic());
 		updatePhase.add(new UpdateArrows());
-		updatePhase.add(new UpdateCoins());
+		updatePhase.add(new UpdateItems());
 		updatePhase.add(new UpdatePlayerControl());
 		updatePhase.add(new UpdateAIControl());
 		updatePhase.add(new UpdatePlayerAim(this));
@@ -142,6 +144,7 @@ class Game extends Screen {
 		renderPhase.add(new RenderAimLine());
 		
 		renderPhase.add(new RenderPlayerLifebar());
+		renderPhase.add(new RenderPlayerMoneybar());
 	}
 	
 	override function onResize():Void {

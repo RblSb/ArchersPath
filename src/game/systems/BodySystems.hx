@@ -50,6 +50,7 @@ class UpdateBodyCollision implements ISystem {
 			if (entity.existsType(AI)) {
 				entity.remove(entity.get(AI));
 				for (i in 0...3) createCoin(pos);
+				createHp(pos);
 			}
 			if (entity.existsType(Player)) entity.remove(entity.get(Player));
 			//entity.remove(ai);
@@ -80,6 +81,20 @@ class UpdateBodyCollision implements ISystem {
 			new Sprite(Assets.images.coins, 15, 15),
 			new Position(pos.x, pos.y),
 			new Size(15, 15),
+			new Speed(1 - Math.random() * 2, Math.random() * -3),
+			new Gravity(0, 0.1),
+			new Life(true)
+		]);
+	}
+	
+	inline function createHp(pos:Position) {
+		game.engine.create([
+			new Hp(),
+			new Body(),
+			new Collision(),
+			new Sprite(Assets.images.lifes, 14, 12),
+			new Position(pos.x, pos.y),
+			new Size(14, 12),
 			new Speed(1 - Math.random() * 2, Math.random() * -3),
 			new Gravity(0, 0.1),
 			new Life(true)

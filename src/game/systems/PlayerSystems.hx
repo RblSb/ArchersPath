@@ -194,7 +194,7 @@ class RenderPlayerLifebar implements ISystem {
 	var g(get, never):Graphics;
 	function get_g() return Screen.frame.g2;
 	static inline var w = 31;
-	var h = Assets.images.hp.height;
+	var h = Assets.images.gui_hp.height;
 	
 	public function before():Void {
 		g.color = 0xFFFFFFFF;
@@ -204,16 +204,60 @@ class RenderPlayerLifebar implements ISystem {
 		var x = 10;
 		var y = 10;
 		for (i in 0...Std.int(life.hp/10)) {
-			g.drawSubImage(Assets.images.hp, x, y, 0, 0, w, h);
+			g.drawSubImage(Assets.images.gui_hp, x, y, 0, 0, w, h);
 			x += w - 1;
 		}
 		if (life.hp % 10 != 0) {
-			g.drawSubImage(Assets.images.hp, x, y, w, 0, w, h);
+			g.drawSubImage(Assets.images.gui_hp, x, y, w, 0, w, h);
 			x += w - 1;
 		}
 		for (i in 0...Std.int((life.maxHp - life.hp)/10)) {
-			g.drawSubImage(Assets.images.hp, x, y, w*2, 0, w, h);
+			g.drawSubImage(Assets.images.gui_hp, x, y, w*2, 0, w, h);
 			x += w - 1;
+		}
+	}
+	
+}
+
+class RenderPlayerMoneybar implements ISystem {
+	
+	var g(get, never):Graphics;
+	function get_g() return Screen.frame.g2;
+	var img = Assets.images.gui_coin;
+	var h = Assets.images.gui_coin.height;
+	
+	public function before():Void {
+		g.color = 0xFFFFFFFF;
+	}
+	
+	function update(player:Player, control:Control, moneybar:Moneybar, life:Life):Void {
+		var x = 10;
+		var y = 40;
+		g.drawImage(img, x, y);
+		//g.font = Assets.fonts.OpenSans_Regular;
+		//g.fontSize = 24;
+		//g.drawString(""+player.money, x + img.width, y);
+		drawNumber(player.money, x + img.width + 3, y + 3);
+	}
+	
+	function drawNumber(n:Int, x:Int, y:Int):Void { //only uints
+		var w = [0, 12, 22, 34, 46, 58, 70, 82, 94, 106, 118, 131, 144];
+		var h = 17;
+		var img = Assets.images.gui_number_font;
+		var offx = 0;
+		var num = n;
+		while (num > 0) {
+			var digit = num % 10;
+			offx += w[digit+1] - w[digit];
+			num = Std.int(num / 10);
+		}
+		
+		if (n == 0) g.drawSubImage(img, x, y, 0, 0, w[1], h);
+		else while (n > 0) {
+			var digit = n % 10;
+			offx -= w[digit+1] - w[digit];
+			g.drawSubImage(img, x + offx, y, w[digit], 0, w[digit+1] - w[digit], h);
+			n = Std.int(n / 10);
 		}
 	}
 	

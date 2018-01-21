@@ -72,17 +72,27 @@ class Life implements IComponent {
 		maxHp = hp;
 	}
 	
-	public function damage(dmg:Int):Void {
+	public inline function damage(dmg:Int):Void {
 		if (damageSkip != 0) return;
 		hp -= dmg;
 		if (hp <= 0) alive = false;
 		else damageSkip = damageSkipMax;
 	}
+	
+	public inline function heal(add:Int):Void {
+		hp += add;
+		if (hp > maxHp) hp = maxHp;
+	}
 }
 
 class Lifebar implements IComponent {}
 
-class Player implements IComponent {}
+class Moneybar implements IComponent {}
+
+class Player implements IComponent {
+	var money = 0;
+	public function new() {};
+}
 
 class AI implements IComponent {}
 
@@ -118,12 +128,22 @@ class Arrow implements IComponent {
 	}
 }
 
-class Coin implements IComponent {
-	var frame = 0;
+class Item implements IComponent {
 	var lastSpeed:Point = {x: 0, y: 0};
+	public function new() {}
+}
+
+class Coin extends Item {
 	
-	public function new(?player:Entity) {
-		//this.player = player;
+	public function new() {
+		super();
+	}
+}
+
+class Hp extends Item {
+	
+	public function new() {
+		super();
 	}
 }
 
