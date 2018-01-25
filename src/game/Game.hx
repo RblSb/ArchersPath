@@ -100,7 +100,7 @@ class Game extends Screen {
 			new Size(Std.int(lvl.tsize/1.5), lvl.tsize),
 			new Speed(0, 0),
 			new Gravity(0, 0.2),
-			new Life(true, 5)
+			new Life(true, 15)
 		]);
 		
 		/*engine.create([
@@ -138,7 +138,8 @@ class Game extends Screen {
 		renderPhase.add(new RenderBG());
 		renderPhase.add(new RenderMapBG());
 		renderPhase.add(new RenderMapTG());
-		renderPhase.add(new RenderBodies());
+		renderPhase.add(new RenderBodies(this));
+		renderPhase.add(new RenderAnimations());
 		renderPhase.add(new RenderArrows());
 		//renderPhase.add(new RenderCoins());
 		renderPhase.add(new RenderAimLine());

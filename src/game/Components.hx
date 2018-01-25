@@ -90,11 +90,18 @@ class Lifebar implements IComponent {}
 class Moneybar implements IComponent {}
 
 class Player implements IComponent {
+	var arrowType = 0;
 	var money = 0;
 	public function new() {};
 }
 
-class AI implements IComponent {}
+class AI implements IComponent {
+	var frozen = 0;
+	var shocked = 0;
+	var shockedAnim = false;
+	var blown = false;
+	public function new() {};
+}
 
 class Control implements IComponent {
 	var keys:Map<Int, Bool>;
@@ -118,13 +125,16 @@ class Bow implements IComponent {
 }
 
 class Arrow implements IComponent {
+	var visible = true;
 	var player:Entity;
 	var lastSpeedX:Float;
 	var lastSpeedY:Float;
 	var ang:Float;
+	var type:Int;
 	
-	public function new(?player:Entity) {
+	public function new(type=0, ?player:Entity) {
 		this.player = player;
+		this.type = type;
 	}
 }
 
@@ -147,6 +157,14 @@ class Hp extends Item {
 	}
 }
 
+class Anim implements IComponent {
+	var repeat:Int;
+	
+	public function new(repeat=1) {
+		this.repeat = repeat;
+	}
+}
+
 class Sprite implements IComponent {
 	var img:Image;
 	var setW:Int;
@@ -157,15 +175,16 @@ class Sprite implements IComponent {
 	
 	var dir = 1;
 	var frameDelay = 0;
-	var frameDelayMax = 5;
+	var frameDelayMax:Int;
 	var frameType:String;
 	var frameTypeId:Int;
 	var animCounter = 0;
 	
-	public function new(img:Image, w:Int, h:Int, ?sets) {
+	public function new(img:Image, w:Int, h:Int, frameDelayMax=5, ?sets) {
 		this.img = img;
 		this.w = w;
 		this.h = h;
+		this.frameDelayMax = frameDelayMax;
 		this.setW = Std.int(img.width / w);
 		if (sets != null) this.sets = sets;
 		else {

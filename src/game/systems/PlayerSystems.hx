@@ -22,6 +22,18 @@ class UpdatePlayerControl implements ISystem {
 			coll.down = false;
 			speed.y = body.jump;
 		}
+		
+		var maxArrowType = 3;
+		if (keys[KeyCode.Q]) {
+			player.arrowType--;
+			keys[KeyCode.Q] = false;
+			if (player.arrowType < 0) player.arrowType = maxArrowType;
+			
+		} else if (keys[KeyCode.E]) {
+			player.arrowType++;
+			keys[KeyCode.E] = false;
+			if (player.arrowType > maxArrowType) player.arrowType = 0;
+		}
 	}
 	
 }
@@ -109,7 +121,7 @@ class UpdatePlayerAim implements ISystem {
 			var y = pointer.y - pos.y - size.h/2 - 3 - camera.y;
 			bow.ang = Math.atan2(y, x);
 			if (bow.arrow == null) bow.arrow = game.engine.create([
-				new Arrow(entity),
+				new Arrow(player.arrowType, entity),
 				new Collision(),
 				new Position(0, 0, true),
 				new Size(1, 1),
@@ -124,6 +136,7 @@ class UpdatePlayerAim implements ISystem {
 			bow.arrow.add(new Speed(sx, sy));
 			bow.arrow.get(Arrow).lastSpeedX = sx;
 			bow.arrow.get(Arrow).lastSpeedY = sy;
+			bow.arrow.get(Arrow).type = player.arrowType;
 			
 			var sx = Math.cos(bow.ang) * 15;
 			var sy = Math.sin(bow.ang) * 15;
@@ -142,6 +155,7 @@ class UpdatePlayerAim implements ISystem {
 			}
 			ang = Utils.MathExtension.toRad(90 - ang * side);
 			bow.arrow.get(Arrow).ang = ang;
+			bow.arrow.get(Arrow).visible = sprite.frameType == "attack";
 			
 			reset = false;
 		}
@@ -149,6 +163,7 @@ class UpdatePlayerAim implements ISystem {
 		if (reset) {
 			if (bow.tension == 0) return;
 			bow.arrow.get(Position).fixed = false;
+			bow.arrow.get(Arrow).visible = true;
 			bow.arrow = null;
 			bow.tension = 0;
 		}

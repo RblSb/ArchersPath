@@ -108,26 +108,58 @@ class RenderBodies implements ISystem {
 	function get_g() return Screen.frame.g2;
 	var camera(get, never):Point;
 	function get_camera() return Game.lvl.camera;
-	#if debug
-	var rects:View<{body:Body, pos:Position, size:Size}>;
-	#end
-	var targets:View<{sprite:Sprite, body:Body, pos:Position, size:Size, life:Life}>;
+	var entity:Entity;
+	var game:Game;
 	
-	public function before() {
-		g.color = 0xFFFFFFFF;
+	public function new(game:Game) {
+		this.game = game;
 	}
 	
-	public function update() {
-		#if debug
-		g.opacity = 0.5;
-		for (o in rects) drawRect(o.data.pos, o.data.size);
-		g.opacity = 1;
-		#end
-		for (o in targets) drawSprite(o.data.sprite, o.data.pos, o.data.size, o.data.life);
+	inline function drawLightning(pos:Position, size:Size):Void {
+		var w = 13;
+		var h = 13;
+		game.engine.create([
+			new Anim(3),
+			new Sprite(Assets.images.electric_sparks2, w, h, 3),
+			new Position(pos.x + Math.random() * (size.w - w), pos.y + Math.random() * (size.h - h)),
+			new Size(w, h)
+		]);
 	}
 	
-	inline function drawSprite(sprite:Sprite, pos:Position, size:Size, life:Life):Void {
+	inline function drawExplosion(pos:Position, size:Size):Void {
+		var w = 18;
+		var h = 18;
+		game.engine.create([
+			new Anim(),
+			new Sprite(Assets.images.explosion, w, h),
+			new Position(pos.x + size.w/2 - w/2, pos.y + size.h/2 - h/2),
+			new Size(w, h)
+		]);
+	}
+	
+	public function update(sprite:Sprite, body:Body, pos:Position, size:Size, life:Life):Void {
 		if (!life.alive) deathAnimation(sprite);
+		g.color = 0xFFFFFFFF;
+		
+		if (entity.existsType(AI)) {
+			var ai = entity.get(AI);
+			if (ai.frozen > 0) {
+				g.color = 0xFF88FFFF;
+				if (ai.frozen < 0x88) {
+					var color = g.color;
+					color.R = (255 - ai.frozen) / 255;
+					g.color = color;
+				}
+			}
+			if (ai.shockedAnim) {
+				for (i in 0...3) drawLightning(pos, size);
+				ai.shockedAnim = false;
+			}
+			if (ai.blown) {
+				drawExplosion(pos, size);
+				ai.blown = false;
+			}
+		}
 		
 		var x = (sprite.frame % sprite.setW) * sprite.w;
 		var y = Std.int(sprite.frame / sprite.setW) * sprite.h;

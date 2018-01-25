@@ -17,6 +17,21 @@ class UpdateAIControl implements ISystem {
 	function update(ai:AI, control:Control, body:Body, pos:Position, size:Size, speed:Speed, coll:Collision):Void {
 		var keys = control.keys;
 		
+		if (ai.frozen > 0) {
+			ai.frozen--;
+			return;
+		}
+		if (ai.shocked > 0) {
+			startMove(keys);
+			if (Std.random(5) == 0) invertMoveDirection(keys);
+			ai.shocked--;
+		}
+		if (ai.blown && coll.down) {
+			speed.y -= 3;
+			speed.x = -speed.x;
+			coll.down = false;
+		}
+		
 		if (Std.random(30) == 0) startMove(keys);
 		if (Std.random(100) == 0) startJump(keys);
 		if (Std.random(150) == 0) stopMove(keys);
@@ -94,6 +109,11 @@ class UpdateAIControl implements ISystem {
 		keys[KeyCode.D] = side == -1;
 	}
 	
+	inline function invertMoveDirection(keys:Map<Int, Bool>):Void {
+		keys[KeyCode.A] = !keys[KeyCode.A];
+		keys[KeyCode.D] = !keys[KeyCode.D];
+	}
+	
 	inline function block(x:Float, y:Float):Bool {
 		var ix = Std.int(x / tsize);
 		var iy = Std.int(y / tsize);
@@ -129,6 +149,7 @@ class UpdateAIAnimation implements ISystem {
 	function get_camera() return Game.lvl.camera;
 	
 	function update(ai:AI, control:Control, sprite:Sprite, pos:Position, size:Size, speed:Speed, body:Body, coll:Collision):Void {
+		if (ai.frozen > 0) return;
 		var keys = control.keys;
 		if (keys[KeyCode.Space]) {
 			sprite.setAnimType("attack");

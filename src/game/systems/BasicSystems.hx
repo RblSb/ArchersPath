@@ -4,6 +4,7 @@ import kha.graphics2.Graphics;
 import kha.Assets;
 import kha.Image;
 import edge.ISystem;
+import edge.Entity;
 import edge.View;
 import game.Components;
 import Lvl.Slope;
@@ -30,17 +31,43 @@ class UpdateTileCollision implements ISystem {
 	function update(coll:Collision, pos:Position, size:Size, speed:Speed, gr:Gravity):Void {
 		if (pos.fixed) return;
 		coll.state = false;
-			
 		coll.left = false;
 		coll.right = false;
-		pos.x += speed.x;
-		collision(coll, pos, size, speed, 0);
-			
 		coll.up = false;
 		coll.down = false;
-		pos.y += speed.y;
-		collision(coll, pos, size, speed, 1);
+		
+		var sx = Math.abs(speed.x);
+		var sy = Math.abs(speed.y);
+		var vx = sx / speed.x;
+		var vy = sy / speed.y;
+		var min = tsize / 4;
+		
+		while(sx > min || sy > min) {
+			if (sx > min) {
+				pos.x += min * vx;
+				sx -= min;
+				collision(coll, pos, size, speed, 0);
+				if (coll.state) sx = 0;
+			}
 			
+			if (sy > min) {
+				pos.y += min * vy;
+				sy -= min;
+				collision(coll, pos, size, speed, 1);
+				if (coll.state) sy = 0;
+			}
+		}
+		
+		if (sx > 0) {
+			pos.x += sx * vx;
+			collision(coll, pos, size, speed, 0);
+		}
+		
+		if (sy > 0) {
+			pos.y += sy * vy;
+			collision(coll, pos, size, speed, 1);
+		}
+		
 		pos.x -= speed.x;
 		pos.y -= speed.y;
 	}
@@ -66,11 +93,11 @@ class UpdateTileCollision implements ISystem {
 	
 	inline function block(ix:Int, iy:Int, coll:Collision, pos:Position, size:Size, speed:Speed, dir:Int, slope:Slope):Void {
 		switch (slope) {
-		case Slope.FULL: FULL(ix, iy, coll, pos, size, speed, dir);
-		case Slope.HALF_B: HALF_B(ix, iy, coll, pos, size, speed, dir);
-		case Slope.HALF_T: HALF_T(ix, iy, coll, pos, size, speed, dir);
-		case Slope.HALF_L: HALF_L(ix, iy, coll, pos, size, speed, dir);
-		case Slope.HALF_R: HALF_R(ix, iy, coll, pos, size, speed, dir);
+		case FULL: FULL(ix, iy, coll, pos, size, speed, dir);
+		case HALF_B: HALF_B(ix, iy, coll, pos, size, speed, dir);
+		case HALF_T: HALF_T(ix, iy, coll, pos, size, speed, dir);
+		case HALF_L: HALF_L(ix, iy, coll, pos, size, speed, dir);
+		case HALF_R: HALF_R(ix, iy, coll, pos, size, speed, dir);
 		case HALF_BL: HALF_BL(ix, iy, coll, pos, size, speed, dir);
 		case HALF_BR: HALF_BR(ix, iy, coll, pos, size, speed, dir);
 		case HALF_TL: HALF_TL(ix, iy, coll, pos, size, speed, dir);
@@ -397,6 +424,34 @@ class RenderMapTG implements ISystem {
 	
 	public function update():Void {
 		Game.lvl.drawLayer(g, 1);
+	}
+	
+}
+
+class RenderAnimations implements ISystem {
+	
+	var g(get, never):Graphics;
+	function get_g() return Screen.frame.g2;
+	var camera(get, never):Point;
+	function get_camera() return Game.lvl.camera;
+	var entity:Entity;
+	
+	public function update(anim:Anim, sprite:Sprite, pos:Position, size:Size):Void {
+		var x = (sprite.frame % sprite.setW) * sprite.w;
+		var y = Std.int(sprite.frame / sprite.setW) * sprite.h;
+		var offx = size.w/2 - sprite.w/2;
+		
+		g.drawSubImage(
+			sprite.img,
+			Math.round(pos.x + camera.x + offx),
+			Math.round(pos.y + camera.y) - (sprite.h - size.h),
+			x, y, sprite.w, sprite.h
+		);
+		sprite.playAnimType();
+		if (sprite.frame == 0 && sprite.frameDelay == 0) {
+			anim.repeat--;
+			if (anim.repeat == 0) entity.destroy();
+		}
 	}
 	
 }
