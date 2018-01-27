@@ -19,43 +19,25 @@ private typedef Props = {
 @:enum
 abstract Slope(Int) from Int to Int {
 	
-	public static inline var NONE = -1;
-	public static inline var FULL = 0;
-	public static inline var HALF_B = 1;
-	public static inline var HALF_T = 2;
-	public static inline var HALF_L = 3;
-	public static inline var HALF_R = 4;
-	public static inline var HALF_BL = 5;
-	public static inline var HALF_BR = 6;
-	public static inline var HALF_TL = 7;
-	public static inline var HALF_TR = 8;
-	public static inline var QUARTER_BL = 9;
-	public static inline var QUARTER_BR = 10;
-	public static inline var QUARTER_TL = 11;
-	public static inline var QUARTER_TR = 12;
+	var NONE = -1;
+	var FULL = 0;
+	var HALF_B = 1;
+	var HALF_T = 2;
+	var HALF_L = 3;
+	var HALF_R = 4;
+	var HALF_BL = 5;
+	var HALF_BR = 6;
+	var HALF_TL = 7;
+	var HALF_TR = 8;
+	var QUARTER_BL = 9;
+	var QUARTER_BR = 10;
+	var QUARTER_TL = 11;
+	var QUARTER_TR = 12;
+	
+	public inline function new(type:Slope) this = type;
 	
 	@:from public static function fromString(type:String):Slope {
-		return new Slope(switch(type) {
-		case "NONE": NONE;
-		case "FULL": FULL;
-		case "HALF_B": HALF_B;
-		case "HALF_T": HALF_T;
-		case "HALF_L": HALF_L;
-		case "HALF_R": HALF_R;
-		case "HALF_BL": HALF_BL;
-		case "HALF_BR": HALF_BR;
-		case "HALF_TL": HALF_TL;
-		case "HALF_TR": HALF_TR;
-		case "QUARTER_BL": QUARTER_BL;
-		case "QUARTER_BR": QUARTER_BR;
-		case "QUARTER_TL": QUARTER_TL;
-		case "QUARTER_TR": QUARTER_TR;
-		default: NONE;
-		});
-	}
-	
-	public inline function new(type:Slope) {
-		this = type;
+		return Macro.fromString(Slope);
 	}
 	
 	public static function rotate(type:Slope):Slope {
@@ -305,27 +287,24 @@ class Lvl {
 			for (ix in sx...ex) {
 				var id = map.layers[layer][iy][ix];
 				if (id != 0) id += layersOffset[layer];
-				//var id = getTile(layer, ix, iy);
-						
+				
 				if (id > 0) {
-					
-					var x = (id % tilesetW) * tsize;
-					var y = Std.int(id / tilesetW) * tsize;
-					
 					g.drawSubImage(
 						tileset,
 						ix * tsize + camX,
 						iy * tsize + camY,
-						x, y, tsize, tsize
+						(id % tilesetW) * tsize,
+						Std.int(id / tilesetW) * tsize,
+						tsize, tsize
 					);
 				}
 			}
 		
 		
 		#if debug
-		/*if (layer != 0) return;
+		/*if (layer != 1) return;
 		var s = 1; //0.5;
-		var x = System.windowWidth() - origTileset.width*s;
+		var x = Screen.w - origTileset.width*s;
 		g.drawScaledImage(origTileset, x, 0,
 			origTileset.width*s, origTileset.height*s
 		);*/

@@ -1,8 +1,8 @@
 package;
 
 import kha.Framebuffer;
+import kha.graphics2.Graphics;
 import kha.System;
-import kha.Font;
 import kha.Assets;
 import game.Game;
 
@@ -22,7 +22,7 @@ class Loader {
 		Screen._init(sets.touchMode);
 		if (sets.lang == null) Lang.init();
 		else Lang.set(sets.lang);
-		Font.glyphs = Lang.fontGlyphs;
+		Graphics._glyphs = Lang.fontGlyphs;
 		
 		#if kha_html5
 		var nav = js.Browser.window.location.hash.substr(1);

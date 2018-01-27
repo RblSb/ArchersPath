@@ -12,28 +12,31 @@ import Types.Point;
 class UpdatePlayerControl implements ISystem {
 	
 	function update(player:Player, body:Body, speed:Speed, coll:Collision, control:Control):Void {
-		var airHack = false;
+		if (coll.down) player.jump = 0;
+		var airJump = player.jump < player.maxJump;
 		
 		var keys = control.keys;
 		var sx = coll.down ? body.landSX : body.airSX;
 		if ((keys[KeyCode.Left] || keys[KeyCode.A]) && speed.x > -body.maxRunSX) speed.x -= sx;
 		if ((keys[KeyCode.Right] || keys[KeyCode.D]) && speed.x < body.maxRunSX) speed.x += sx;
-		if ((keys[KeyCode.Up] || keys[KeyCode.W] || keys[KeyCode.Space]) && (coll.down || airHack)) {
+		if ((keys[KeyCode.Up] || keys[KeyCode.W] || keys[KeyCode.Space]) && (coll.down || airJump)) {
 			coll.down = false;
 			speed.y = body.jump;
+			player.jump++;
+			keys[KeyCode.Up] = keys[KeyCode.W] = keys[KeyCode.Space] = false;
 		}
-		
-		var maxArrowType = 3;
+		#if debug
 		if (keys[KeyCode.Q]) {
 			player.arrowType--;
 			keys[KeyCode.Q] = false;
-			if (player.arrowType < 0) player.arrowType = maxArrowType;
+			if (player.arrowType == -1) player.arrowType = BLOWN;
 			
 		} else if (keys[KeyCode.E]) {
 			player.arrowType++;
 			keys[KeyCode.E] = false;
-			if (player.arrowType > maxArrowType) player.arrowType = 0;
+			if (player.arrowType == BLOWN+1) player.arrowType = NORMAL;
 		}
+		#end
 	}
 	
 }
@@ -192,7 +195,7 @@ class RenderAimLine implements ISystem {
 		var gx = bow.arrow.get(Gravity).x;
 		var gy = bow.arrow.get(Gravity).y;
 		
-		for (i in 0...Std.int(bow.tensionMin)*10) {
+		for (i in 0...bow.aimLine) {
 			sx += gx;
 			sy += gy;
 			x += sx;

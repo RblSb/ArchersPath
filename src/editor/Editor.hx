@@ -281,7 +281,7 @@ class Editor extends Screen {
 		else reader.readAsText(file);
 	}
 	
-	inline function onFileLoad(file:Dynamic) {
+	inline function onFileLoad(file:Dynamic):Void {
 		var bytes = haxe.io.Bytes.ofData(file);
 		var blob = kha.Blob.fromBytes(bytes);
 		var map = Old.loadMap(blob);
@@ -289,13 +289,13 @@ class Editor extends Screen {
 	}
 	#end
 	
-	inline function onMapLoad(map:GameMap, ?name:String) {
+	inline function onMapLoad(map:GameMap, ?name:String):Void {
 		if (name != null) map.name = name;
 		lvl.loadCustomMap(map);
 		clearHistory();
 	}
 	
-	inline function clearHistory() {
+	inline function clearHistory():Void {
 		arrow.clearHistory();
 		brush.clearHistory();
 		fillRect.clearHistory();

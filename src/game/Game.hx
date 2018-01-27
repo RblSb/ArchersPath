@@ -9,6 +9,7 @@ import game.systems.PlayerSystems;
 import game.systems.AISystems;
 import game.systems.ArrowSystems;
 import game.systems.ItemSystems;
+import game.systems.ChestSystems;
 import game.Components;
 import editor.Editor;
 
@@ -103,7 +104,16 @@ class Game extends Screen {
 			new Life(true, 15)
 		]);
 		
-		/*engine.create([
+		engine.create([
+			new Chest(JUMP),
+			new Body(),
+			new Collision(),
+			new Sprite(Assets.images.chest, 32, 40, 2),
+			new Position((spawn.x+13) * lvl.tsize, spawn.y * lvl.tsize - 8),
+			new Size(32, 40),
+		]);
+		
+		engine.create([
 			new AI(),
 			new Control(new Map(), new Map()),
 			new Body(),
@@ -114,7 +124,7 @@ class Game extends Screen {
 			new Speed(0, 0),
 			new Gravity(0, 0.2),
 			new Life(true, 5)
-		]);*/
+		]);
 		
 		updatePhase.add(new UpdateGravitation());
 		updatePhase.add(new UpdateTileCollision());
@@ -130,6 +140,7 @@ class Game extends Screen {
 		updatePhase.add(new UpdateBodyPhysic());
 		updatePhase.add(new UpdateArrows());
 		updatePhase.add(new UpdateItems());
+		updatePhase.add(new UpdateChests());
 		updatePhase.add(new UpdatePlayerControl());
 		updatePhase.add(new UpdateAIControl());
 		updatePhase.add(new UpdatePlayerAim(this));
@@ -138,10 +149,10 @@ class Game extends Screen {
 		renderPhase.add(new RenderBG());
 		renderPhase.add(new RenderMapBG());
 		renderPhase.add(new RenderMapTG());
+		renderPhase.add(new RenderChests());
 		renderPhase.add(new RenderBodies(this));
 		renderPhase.add(new RenderAnimations());
 		renderPhase.add(new RenderArrows());
-		//renderPhase.add(new RenderCoins());
 		renderPhase.add(new RenderAimLine());
 		
 		renderPhase.add(new RenderPlayerLifebar());

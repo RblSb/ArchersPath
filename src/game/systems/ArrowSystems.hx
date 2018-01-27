@@ -67,10 +67,11 @@ class UpdateArrowCollision implements ISystem {
 				if (item.entity.existsType(AI)) {
 					var dmg = 5;
 					switch (arrow.type) {
-					case 1: item.entity.get(AI).frozen = 4 * 60;
-					case 2: item.entity.get(AI).shocked = 2 * 60; dmg += 5;
-					item.entity.get(AI).shockedAnim = true;
-					case 3: item.entity.get(AI).blown = true; dmg += 10;
+					case NORMAL:
+					case FROZEN: item.entity.get(AI).frozen = 4 * 60;
+					case SHOCKED: item.entity.get(AI).shocked = 2 * 60; dmg += 5;
+						item.entity.get(AI).shockedAnim = true;
+					case BLOWN: item.entity.get(AI).blown = true; dmg += 10;
 					}
 					e.life.damage(dmg);
 					entity.destroy();

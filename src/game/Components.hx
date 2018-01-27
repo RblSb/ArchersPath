@@ -90,8 +90,10 @@ class Lifebar implements IComponent {}
 class Moneybar implements IComponent {}
 
 class Player implements IComponent {
-	var arrowType = 0;
+	var arrowType:ArrowType = NORMAL;
 	var money = 0;
+	var jump = 0;
+	var maxJump = 1;
 	public function new() {};
 }
 
@@ -113,6 +115,7 @@ class Bow implements IComponent {
 	var tensionMin:Float;
 	var tensionMax:Float;
 	var tensionSpeed:Float;
+	var aimLine = 5;
 	var ang:Float;
 	var arrow:Entity;
 	
@@ -124,13 +127,21 @@ class Bow implements IComponent {
 	}
 }
 
+@:enum
+abstract ArrowType(Int) from Int to Int {
+	var NORMAL = 0;
+	var FROZEN = 1;
+	var SHOCKED = 2;
+	var BLOWN = 3;
+}
+
 class Arrow implements IComponent {
 	var visible = true;
 	var player:Entity;
 	var lastSpeedX:Float;
 	var lastSpeedY:Float;
 	var ang:Float;
-	var type:Int;
+	var type:ArrowType;
 	
 	public function new(type=0, ?player:Entity) {
 		this.player = player;
@@ -154,6 +165,42 @@ class Hp extends Item {
 	
 	public function new() {
 		super();
+	}
+}
+
+@:enum
+abstract ChestReward(Int) from Int to Int {
+	var LIFE = 0;
+	var AIM = 1;
+	var JUMP = 2;
+	var FROZEN_ARROWS = 3;
+	var SHOKED_ARROWS = 4;
+	var BLOWN_ARROWS = 5;
+	
+	public inline function new(type:ChestReward) this = type;
+	
+	@:from public static function fromString(type:String):ChestReward {
+		return Macro.fromString(ChestReward);
+	}
+}
+
+@:enum
+abstract ChestState(Int) from Int to Int {
+	var CLOSED = 1;
+	var OPENING = 2;
+	var REWARD = 3;
+	var OPENED = 4;
+}
+
+class Chest implements IComponent {
+	var reward:ChestReward;
+	var state:ChestState = CLOSED;
+	var animY = 0;
+	var maxAnimY = 70;
+	var player:Entity;
+	
+	public function new(reward:ChestReward) {
+		this.reward = reward;
 	}
 }
 
