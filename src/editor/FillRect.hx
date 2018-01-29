@@ -3,7 +3,7 @@ package editor;
 import kha.graphics2.Graphics;
 import editor.Interfaces.Tool;
 import editor.Types.ArrHistory;
-import editor.Screen.Pointer;
+import Screen.Pointer;
 import Types.IPoint;
 import Types.IRect;
 
@@ -85,6 +85,7 @@ class FillRect implements Tool {
 	}
 	
 	public function onMouseUp(p:Pointer, layer:Int, x:Int, y:Int, tile:Int):Void {
+		if (p.type == 1) tile = 0;
 		end = {
 			x: x,
 			y: y

@@ -326,15 +326,7 @@ class UpdatePosition implements ISystem {
 
 class UpdateCamera implements ISystem {
 	
-	var pos:Position;
-	var size:Size;
-	
-	public function new(pos:Position, size:Size) {
-		this.pos = pos;
-		this.size = size;
-	}
-	
-	function update():Void {
+	function update(camera:Camera, pos:Position, size:Size):Void {
 		var rect:Rect = {x: pos.x, y: pos.y, w: size.w, h: size.h};
 		Game.lvl.setCamera(rect);
 	}
@@ -355,7 +347,8 @@ class RenderBG implements ISystem {
 		var max = lvl.h * lvl.tsize - Screen.h;
 		var offY = -max;
 		if (max > 0) {
-			var cy = camera.y > 0 ? max : -camera.y;
+			//var cy = camera.y > 0 ? max : -camera.y;
+			var cy = -camera.y;
 			var size = Std.int(max / 5);
 			offY = -Math.round(size * 1.5 - cy / max * size);
 		}
@@ -412,7 +405,7 @@ class RenderMapBG implements ISystem {
 	function get_g() return Screen.frame.g2;
 	
 	public function update():Void {
-		//Game.lvl.drawLayer(g, 0);
+		Game.lvl.drawLayer(g, 0);
 	}
 	
 }
@@ -451,6 +444,60 @@ class RenderAnimations implements ISystem {
 		if (sprite.frame == 0 && sprite.frameDelay == 0) {
 			anim.repeat--;
 			if (anim.repeat == 0) entity.destroy();
+		}
+	}
+	
+}
+
+class RenderGameEnd implements ISystem {
+	
+	var g(get, never):Graphics;
+	function get_g() return Screen.frame.g2;
+	var lvl(get, never):Lvl;
+	function get_lvl() return Game.lvl;
+	var camera(get, never):Point;
+	function get_camera() return Game.lvl.camera;
+	var game:Game;
+	var animY = 500;
+	
+	public function new(game:Game) {
+		this.game = game;
+	}
+	
+	function update():Void {
+		if (game.player != null) {
+			if (game.player.get(Life).alive) return;
+			g.color = 0x50000000;
+			g.fillRect(0, 0, Screen.w, Screen.h);
+			g.color = 0xFFFFFFFF;
+			g.font = Assets.fonts.OpenSans_Regular;
+			g.fontSize = 24;
+			var s = "Press R to Restart";
+			g.drawString(s,
+				Screen.w/2 - g.font.width(g.fontSize, s)/2,
+				Screen.h/2 - g.font.height(g.fontSize)/2
+			);
+			var keys = game.player.get(Control).keys;
+			if (keys[kha.input.KeyCode.R]) {
+				game.newGame();
+				keys[kha.input.KeyCode.R] = false;
+			}
+			return;
+		}
+		if (lvl.map.objects.players.length == 0) return;
+		camera.y++;
+		if (animY > 0) animY--;
+		if (animY < 200) {
+			var color:kha.Color = 0xFFFFFFFF;
+			color.A = 1 - (animY / 200);
+			g.color = color;
+			g.font = Assets.fonts.OpenSans_Regular;
+			g.fontSize = 24;
+			var s = "Game Over";
+			g.drawString(s,
+				Screen.w/2 - g.font.width(g.fontSize, s)/2,
+				Screen.h/2 - g.font.height(g.fontSize)/2
+			);
 		}
 	}
 	

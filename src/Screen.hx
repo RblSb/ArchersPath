@@ -11,8 +11,6 @@ import kha.input.Mouse;
 import kha.Scheduler;
 import kha.System;
 import kha.Assets;
-import edge.Engine;
-import edge.Phase;
 #if kha_g4
 import kha.Shaders;
 import kha.graphics4.BlendingFactor;
@@ -46,11 +44,7 @@ class Screen {
 	static var fps = new FPS();
 	static var taskId:Int;
 	
-	public var engine:Engine; //ECS
-	public var updatePhase:Phase;
-	public var renderPhase:Phase;
-	
-	public var scale(default, null) = 1.0;
+	public var scale(default, null) = 2.0;
 	var backbuffer = Image.createRenderTarget(1, 1);
 	public var keys:Map<Int, Bool> = new Map();
 	public var pointers:Map<Int, Pointer> = [
@@ -105,10 +99,6 @@ class Screen {
 		if (screen != null) screen.hide();
 		screen = this;
 		
-		engine = new Engine();
-		updatePhase = engine.createPhase();
-		renderPhase = engine.createPhase();
-		
 		taskId = Scheduler.addTimeTask(_onUpdate, 0, 1/60);
 		System.notifyOnRender(_onRender);
 		backbuffer = Image.createRenderTarget(Std.int(w/scale), Std.int(h/scale));
@@ -118,7 +108,7 @@ class Screen {
 		if (touch && Surface.get() != null) {
 			Surface.get().notify(_onTouchDown, _onTouchUp, _onTouchMove);
 		} else if (Mouse.get() != null) {
-			Mouse.get().notify(_onMouseDown, _onMouseUp, _onMouseMove, null);
+			Mouse.get().notify(_onMouseDown, _onMouseUp, _onMouseMove, onMouseWheel);
 		}
 		for (k in keys) k = false;
 		for (p in pointers) p.isDown = false;
@@ -138,18 +128,17 @@ class Screen {
 	}
 	
 	inline function _onUpdate():Void {
-		updatePhase.update(1/60);
+		onUpdate();
 		fps.update();
 	}
 	
 	inline function _onRender(framebuffer:Framebuffer):Void {
+		if (Std.int(System.windowWidth() / scale) != w ||
+			Std.int(System.windowHeight() / scale) != h) _onResize();
 		frame = backbuffer;
 		var g = frame.g2;
 		g.begin(false);
-		if (Std.int(System.windowWidth() / scale) != w ||
-			Std.int(System.windowHeight() / scale) != h) _onResize();
-		//onRender(frame);
-		renderPhase.update(1/60);
+		onRender(frame);
 		g.end();
 		
 		var g = framebuffer.g2;
@@ -268,7 +257,7 @@ class Screen {
 	//function onRescale(scale:Float):Void {}
 	function onResize():Void {}
 	function onUpdate():Void {}
-	function onRender(framebuffer:Framebuffer):Void {}
+	function onRender(frame:Image):Void {}
 	
 	public function onKeyDown(key:KeyCode):Void {}
 	public function onKeyUp(key:KeyCode):Void {}
@@ -276,6 +265,7 @@ class Screen {
 	public function onMouseDown(p:Pointer):Void {}
 	public function onMouseMove(p:Pointer):Void {}
 	public function onMouseUp(p:Pointer):Void {}
+	public function onMouseWheel(delta:Int):Void {}
 	
 }
 

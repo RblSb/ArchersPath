@@ -2,15 +2,7 @@
 	"tsize": 32,
 	"scale": 1,
 	"layers": [
-		[
-			{
-				"file": "1"
-			},
-			{
-				"file": "2",
-				"add": ["rotate"]
-			}
-		],
+		[],
 		[
 			{
 				"file": "grass_t",
@@ -135,6 +127,13 @@
 			{
 				"file": "bridge_t_bg",
 				"collide": false,
+				"permeable": false
+			},
+			{
+				"file": "ground_bl2",
+				"add": ["flipX"],
+				"type": "QUARTER_TR",
+				"collide": true,
 				"permeable": false
 			}
 		],

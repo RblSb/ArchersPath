@@ -7,11 +7,13 @@ import kha.input.KeyCode;
 import js.html.CanvasElement;
 import js.Browser.document;
 import js.Browser.window;
+import js.html.Audio;
 #end
 
 class Main {
 	
 	//static var hxt = new hxtelemetry.HxTelemetry();
+	public static var music:Audio;
 	
 	static function main():Void {
 		#if kha_html5 //make html5 canvas resizable
@@ -39,6 +41,15 @@ class Main {
 		khacks();
 		var loader = new Loader();
 		loader.init();
+		
+		#if kha_html5
+		music = new Audio('MoltenCrater.mp3');
+		music.addEventListener('ended', function() {
+			music.currentTime = 0;
+			music.play();
+		}, false);
+		music.play();
+		#end
 	}
 	
 	static inline function khacks():Void {

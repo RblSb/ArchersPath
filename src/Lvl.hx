@@ -101,24 +101,15 @@ typedef GameMap = { //map format
 }
 
 typedef Objects = {
-	?buttons:Array<Object>,
-	?panels:Array<Object>,
-	?texts:Array<Object>,
+	players:Array<Object>,
+	enemys:Array<Object>,
+	chests:Array<Object>,
 }
 
 typedef Object = {
 	>IPoint,
-	?speed:Point,
-	?doors:Array<IPoint>,
-	?text:{
-		?en:TField,
-		?ru:TField
-	}
-}
-
-typedef TField = {
-	text:String,
-	author:String
+	?type:String,
+	?reward:String
 }
 
 class Lvl {
@@ -142,9 +133,9 @@ class Lvl {
 	
 	var screenW = 0; //size of screen in tiles
 	var screenH = 0;
-	var tileset:Image;
-	var tilesetW:Int;
-	var tilesetH:Int;
+	public var tileset(default, null):Image;
+	public var tilesetW(default, null):Int;
+	public var tilesetH(default, null):Int;
 	public var tsize(default, null) = 0; //tile size
 	public var scale(default, null) = 1.0; //tile scale
 	public var camera = {x: 0.0, y: 0.0};
@@ -187,10 +178,12 @@ class Lvl {
 	public function loadMap(id:Int):Void {
 		var data = Reflect.field(Assets.blobs, "maps_"+id+"_json");
 		map = haxe.Json.parse(data.toString());
+		initMap(map);
 	}
 	
 	public function loadCustomMap(map:GameMap):Void {
 		this.map = copyMap(map);
+		initMap(this.map);
 	}
 	
 	public function copyMap(map:GameMap):GameMap {
@@ -207,6 +200,14 @@ class Lvl {
 			objects: map.objects
 		}
 		return copy;
+	}
+	
+	inline function initMap(map:GameMap):Void {
+		if (map.objects == null) map.objects = {
+			players: [],
+			enemys: [],
+			chests: []
+		};
 	}
 	
 	public function getTile(layer:Int, x:Int, y:Int):Int {
@@ -344,14 +345,10 @@ class Lvl {
 	public function getObject(layer:Int, x:Int, y:Int):Object {
 		var id = getTile(layer, x, y);
 		switch(layer) {
-		case 1:
-			if (id == 6 || id == getSpriteEnd(layer, 6)) {
-				return _getObject(map.objects.buttons, x, y);
-			} else if (id == 8 || id == 9 || id == 10 || id == 11) {
-				return _getObject(map.objects.panels, x, y);
-			}
 		case 2:
-			if (id == 5) return _getObject(map.objects.texts, x, y);
+			if (id == 1) return _getObject(map.objects.players, x, y);
+			else if (id == 4) return _getObject(map.objects.chests, x, y);
+			else if (id == 5) return _getObject(map.objects.enemys, x, y);
 		}
 		
 		return null;
@@ -360,7 +357,7 @@ class Lvl {
 	inline function _getObject(arr:Array<Object>, x:Int, y:Int):Object {
 		var obj:Object = null;
 		if (arr != null) for (o in arr)
-			if (o.x == x && o.y == y) {
+			if (o != null && o.x == x && o.y == y) {
 				obj = o;
 				break;
 			}
@@ -369,75 +366,50 @@ class Lvl {
 	
 	public function setObject(layer:Int, x:Int, y:Int, id:Int, obj:Object):Void {
 		switch(layer) {
-		case 1:
-			switch(id) {
-			case 6: _setObject(map.objects.buttons, x, y, obj);
-			case 8, 9, 10, 11: _setObject(map.objects.panels, x, y, obj);
-			}
 		case 2:
 			switch(id) {
-			case 5: _setObject(map.objects.texts, x, y, obj);
+			case 1: _setObject(map.objects.players, x, y, obj);
+			case 4: _setObject(map.objects.chests, x, y, obj);
+			case 5: _setObject(map.objects.enemys, x, y, obj);
 			}
 		}
 	}
 	
 	inline function _setObject(arr:Array<Object>, x:Int, y:Int, obj:Object) {
 		var isNew = true;
-		if (arr != null) for (o in arr)
+		if (arr != null) for (o in arr) {
+			if (o == null) {
+				arr.remove(o);
+				continue;
+			}
 			if (o.x == x && o.y == y) {
 				if (obj == null) arr.remove(o);
 				else o = obj;
 				isNew = false;
 			}
+		}
 		if (isNew) arr.push(obj);
 	}
 	
-	/*public function isObject(layer:Int, tile:Int):Bool {
-		switch(layer) {
-		case 1:
-			switch(tile) {
-				case 6: return true;
-				case 8, 9, 10, 11: return true;
-			}
-		case 2:
-			switch(tile) {
-				case 5: return true;
-			}
-		}
-		return false;
-	}*/
-	
 	public function emptyObject(layer:Int, tile:Int, x:Int, y:Int):Object {
 		switch(layer) {
-		case 1:
-			switch(tile) {
-				case 6: return {x: x, y: y, doors:[]};
-				case 8, 9, 10, 11: return {x: x, y: y, speed:{x:0, y:0}};
-			}
 		case 2:
 			switch(tile) {
-				case 5: return {x: x, y: y, text:{}};
+				case 1: return {x: x, y: y};
+				case 4: return {x: x, y: y, reward: "LIFE"};
+				case 5: return {x: x, y: y, type: "Imp"};
 			}
 		}
 		return null;
 	}
 	
 	public function countObjects(layer:Int):Int {
+		var o = map.objects;
 		switch(layer) {
-		case 1:
-			return map.objects.buttons.length + map.objects.panels.length;
 		case 2:
-			return map.objects.texts.length;
+			return o.players.length + o.chests.length + o.enemys.length;
 		}
 		return 0;
-	}
-	
-	public function getPlayer():IPoint {
-		for (iy in 0...map.h)
-		for (ix in 0...map.w) {
-			if (getTile(2, ix, iy) == 1) return {x: ix, y: iy};
-		}
-		return {x: 0, y: 0};
 	}
 	
 	public function updateCamera():Void {

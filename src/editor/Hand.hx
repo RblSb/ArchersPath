@@ -2,7 +2,7 @@ package editor;
 
 import kha.graphics2.Graphics;
 import editor.Interfaces.Tool;
-import editor.Screen.Pointer;
+import Screen.Pointer;
 import Types.Point;
 
 class Hand implements Tool {

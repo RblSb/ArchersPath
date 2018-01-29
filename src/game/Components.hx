@@ -7,6 +7,8 @@ import Screen.Pointer;
 import Types.Point;
 import Types.Rect;
 
+class Camera implements IComponent {}
+
 class Body implements IComponent {
 	var friction = 0.25;
 	//var gravity = 0.2;
@@ -15,7 +17,9 @@ class Body implements IComponent {
 	var airSX = 0.20;
 	var maxRunSX = 3;
 	//var maxSpeed = 50;
-	public function new() {}
+	public function new(maxRunSX=3) {
+		this.maxRunSX = maxRunSX;
+	}
 }
 
 class Position implements IComponent {
@@ -174,8 +178,9 @@ abstract ChestReward(Int) from Int to Int {
 	var AIM = 1;
 	var JUMP = 2;
 	var FROZEN_ARROWS = 3;
-	var SHOKED_ARROWS = 4;
+	var SHOCKED_ARROWS = 4;
 	var BLOWN_ARROWS = 5;
+	var END = 6;
 	
 	public inline function new(type:ChestReward) this = type;
 	

@@ -12,6 +12,11 @@ class UpdateChests implements ISystem {
 	
 	var targets:View<{player:Player, pos:Position, size:Size}>;
 	var entity:Entity;
+	var game:Game;
+	
+	public function new(game:Game) {
+		this.game = game;
+	}
 	
 	function update(chest:Chest, sprite:Sprite, pos:Position, size:Size):Void {
 		if (chest.state == OPENED) return;
@@ -54,10 +59,11 @@ class UpdateChests implements ISystem {
 			chest.player.get(Bow).aimLine += 5;
 		case FROZEN_ARROWS:
 			chest.player.get(Player).arrowType = FROZEN;
-		case SHOKED_ARROWS:
+		case SHOCKED_ARROWS:
 			chest.player.get(Player).arrowType = SHOCKED;
 		case BLOWN_ARROWS:
 			chest.player.get(Player).arrowType = BLOWN;
+		case END: game.gameComplete();
 		}
 	}
 	

@@ -2,7 +2,7 @@ package editor;
 
 import kha.graphics2.Graphics;
 import kha.math.Vector2;
-import editor.Screen.Pointer;
+import Screen.Pointer;
 import Types.IPoint;
 import Types.Rect;
 

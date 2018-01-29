@@ -8,4 +8,5 @@
 * Lifebar: LokiF (No Copyright)
 * Level Editor icons: Freepik.com
 * Some graphics have my changes.
+* Music: Stewart Copeland
 * Made with [Kha](https://github.com/Kode/Kha)

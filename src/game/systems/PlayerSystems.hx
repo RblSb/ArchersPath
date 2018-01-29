@@ -8,10 +8,12 @@ import edge.Entity;
 import edge.View;
 import game.Components;
 import Types.Point;
+import Types.Rect;
 
 class UpdatePlayerControl implements ISystem {
 	
-	function update(player:Player, body:Body, speed:Speed, coll:Collision, control:Control):Void {
+	function update(player:Player, life:Life, body:Body, speed:Speed, coll:Collision, control:Control):Void {
+		if (!life.alive) return;
 		if (coll.down) player.jump = 0;
 		var airJump = player.jump < player.maxJump;
 		
@@ -26,17 +28,57 @@ class UpdatePlayerControl implements ISystem {
 			keys[KeyCode.Up] = keys[KeyCode.W] = keys[KeyCode.Space] = false;
 		}
 		#if debug
-		if (keys[KeyCode.Q]) {
+		/*if (keys[KeyCode.Q]) {
 			player.arrowType--;
 			keys[KeyCode.Q] = false;
 			if (player.arrowType == -1) player.arrowType = BLOWN;
-			
+
 		} else if (keys[KeyCode.E]) {
 			player.arrowType++;
 			keys[KeyCode.E] = false;
 			if (player.arrowType == BLOWN+1) player.arrowType = NORMAL;
-		}
+		}*/
 		#end
+	}
+	
+}
+
+class UpdatePlayerCollision implements ISystem {
+	
+	var tsize(get, never):Int;
+	function get_tsize() return Game.lvl.tsize;
+	var lvl(get, never):Lvl;
+	function get_lvl() return Game.lvl;
+	var game:Game;
+	
+	public function new(game:Game) {
+		this.game = game;
+	}
+	
+	function update(player:Player, life:Life, coll:Collision, pos:Position, size:Size, speed:Speed):Void {
+		if (!life.alive) return;
+		collision(coll, pos, size);
+	}
+	
+	function collision(coll:Collision, pos:Position, size:Size):Void {
+		var rect:Rect = {
+			x: pos.x,
+			y: pos.y,
+			w: size.w,
+			h: size.h
+		};
+		var x = Std.int(rect.x / tsize);
+		var y = Std.int(rect.y / tsize);
+		var maxX = Math.ceil((rect.x + rect.w) / tsize);
+		var maxY = Math.ceil((rect.y + rect.h) / tsize);
+		
+		for (iy in y...maxY)
+		for (ix in x...maxX) {
+			var tile = lvl.getTile(2, ix, iy);
+			switch (tile) {
+				case 2: game.levelComplete();
+			}
+		}
 	}
 	
 }
@@ -49,7 +91,8 @@ class UpdatePlayerAnimation implements ISystem {
 	function get_camera() return Game.lvl.camera;
 	static inline var animCounterMax = 500;
 	
-	function update(player:Player, control:Control, sprite:Sprite, pos:Position, size:Size, speed:Speed, body:Body,  coll:Collision):Void {
+	function update(player:Player, life:Life, control:Control, sprite:Sprite, pos:Position, size:Size, speed:Speed, body:Body,  coll:Collision):Void {
+		if (!life.alive) return;
 		var left = false, right = false, up = false;
 		var keys = control.keys;
 		if (keys[KeyCode.Left] || keys[KeyCode.A]) left = true;
@@ -116,7 +159,8 @@ class UpdatePlayerAim implements ISystem {
 		this.game = game;
 	}
 	
-	function update(player:Player, sprite:Sprite, pos:Position, size:Size, speed:Speed, gr:Gravity, bow:Bow, control:Control):Void {
+	function update(player:Player, life:Life, sprite:Sprite, pos:Position, size:Size, speed:Speed, gr:Gravity, bow:Bow, control:Control):Void {
+		if (!life.alive) return;
 		var pointer = control.pointers[0];
 		var reset = true;
 		if (pointer.isDown) {
@@ -128,6 +172,7 @@ class UpdatePlayerAim implements ISystem {
 				new Collision(),
 				new Position(0, 0, true),
 				new Size(1, 1),
+				new Speed(0, 0),
 				new Gravity(0, 0.1),
 				new Life(true)
 			]);
@@ -136,29 +181,35 @@ class UpdatePlayerAim implements ISystem {
 			if (bow.tension < bow.tensionMax) bow.tension += bow.tensionSpeed;
 			var sx = Math.cos(bow.ang) * bow.tension;
 			var sy = Math.sin(bow.ang) * bow.tension;
-			bow.arrow.add(new Speed(sx, sy));
-			bow.arrow.get(Arrow).lastSpeedX = sx;
-			bow.arrow.get(Arrow).lastSpeedY = sy;
-			bow.arrow.get(Arrow).type = player.arrowType;
+			var sp = bow.arrow.get(Speed);
+			sp.x = sx;
+			sp.y = sy;
 			
 			var sx = Math.cos(bow.ang) * 15;
 			var sy = Math.sin(bow.ang) * 15;
-			bow.arrow.get(Position).x = pos.x + size.w/2 + sx;
-			bow.arrow.get(Position).y = pos.y + size.h/2 - 3 + sy;
+			
+			var p = bow.arrow.get(Position);
+			p.x = pos.x + size.w/2 + sx;
+			p.y = pos.y + size.h/2 - 3 + sy;
 			
 			//arrow sprite rotation edits
 			var ang:Float = sprite.frameTypeId * 25;
 			var side = sprite.dir == 0 ? -1 : 1;
 			switch(sprite.frameTypeId) {
 				case 0, 1: ang += 5;
-				bow.arrow.get(Position).x += 2 * side;
-				bow.arrow.get(Position).y -= 4;
+				p.x += 2 * side;
+				p.y -= 4;
 				case 8: ang -= 20;
 				default:
 			}
 			ang = Utils.MathExtension.toRad(90 - ang * side);
-			bow.arrow.get(Arrow).ang = ang;
-			bow.arrow.get(Arrow).visible = sprite.frameType == "attack";
+			
+			var arrow = bow.arrow.get(Arrow);
+			arrow.lastSpeedX = sx;
+			arrow.lastSpeedY = sy;
+			arrow.type = player.arrowType;
+			arrow.ang = ang;
+			arrow.visible = sprite.frameType == "attack";
 			
 			reset = false;
 		}
@@ -185,15 +236,19 @@ class RenderAimLine implements ISystem {
 		g.color = 0xFFFF0000;
 	}
 	
-	public function update(player:Player, control:Control, pos:Position, size:Size, gr:Gravity, bow:Bow) {
+	public function update(player:Player, life:Life, control:Control, pos:Position, size:Size, gr:Gravity, bow:Bow) {
+		if (!life.alive) return;
 		if (bow.tension == 0) return;
 		
-		var x = bow.arrow.get(Position).x + camera.x;
-		var y = bow.arrow.get(Position).y + camera.y;
-		var sx = bow.arrow.get(Speed).x;
-		var sy = bow.arrow.get(Speed).y;
-		var gx = bow.arrow.get(Gravity).x;
-		var gy = bow.arrow.get(Gravity).y;
+		var p = bow.arrow.get(Position);
+		var x = p.x + camera.x;
+		var y = p.y + camera.y;
+		var s = bow.arrow.get(Speed);
+		var sx = s.x;
+		var sy = s.y;
+		var gr = bow.arrow.get(Gravity);
+		var gx = gr.x;
+		var gy = gr.y;
 		
 		for (i in 0...bow.aimLine) {
 			sx += gx;

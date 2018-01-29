@@ -35,6 +35,10 @@ class UpdateBodyPhysic implements ISystem {
 
 class UpdateBodyCollision implements ISystem {
 	
+	var lvl(get, never):Lvl;
+	function get_lvl() return Game.lvl;
+	var tsize(get, never):Int;
+	function get_tsize() return Game.lvl.tsize;
 	var targets:View<{body:Body, coll:Collision, pos:Position, size:Size, life:Life}>;
 	var entity:Entity;
 	var game:Game;
@@ -45,16 +49,17 @@ class UpdateBodyCollision implements ISystem {
 	
 	function update(body:Body, coll:Collision, pos:Position, size:Size, speed:Speed, life:Life) {
 		if (pos.fixed) return;
+		if (pos.y + size.h > lvl.h * tsize) life.alive = false;
 		if (life.damageSkip != 0) life.damageSkip--;
 		if (!life.alive) {
 			if (entity.existsType(AI)) {
 				entity.remove(entity.get(AI));
-				for (i in 0...3) createCoin(pos);
-				createHp(pos);
+				for (i in 0...1+Std.random(3)) createCoin(pos);
+				if (Std.random(5) == 0) createHp(pos);
 			}
-			if (entity.existsType(Player)) entity.remove(entity.get(Player));
-			//entity.remove(ai);
-			//entity.destroy();
+			/*if (entity.existsType(Player)) {
+				game.killPlayer(entity);
+			}*/
 			return;
 		}
 		for (item in targets) {

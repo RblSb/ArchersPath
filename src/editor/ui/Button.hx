@@ -8,7 +8,7 @@ import kha.input.KeyCode;
 import kha.Color;
 import Types.Point;
 import Types.Rect;
-import editor.Screen.Pointer;
+import Screen.Pointer;
 
 private typedef ButtonSets = {
 	x:Float,

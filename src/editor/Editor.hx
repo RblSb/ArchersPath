@@ -1,6 +1,6 @@
 package editor;
 
-import kha.Framebuffer;
+import kha.Image;
 import kha.graphics2.Graphics;
 import kha.input.KeyCode;
 import kha.Assets;
@@ -8,8 +8,7 @@ import kha.Image;
 import editor.ui.Button;
 import game.Game;
 import editor.Interfaces.Tool;
-import editor.Screen;
-import editor.Screen.Pointer;
+import Screen.Pointer;
 import Lvl.GameMap;
 import Types.IPoint;
 import Types.Point;
@@ -19,6 +18,8 @@ import haxe.Json;
 
 class Editor extends Screen {
 	
+	static inline var BTN_SIZE = 48;
+	var tilePanel:TilePanel;
 	var buttons:Array<Button>;
 	var arrow:Arrow;
 	var brush:Brush;
@@ -65,6 +66,7 @@ class Editor extends Screen {
 		lvl.loadMap(0);
 		layerOffsets = lvl.getTilesOffset();
 		
+		tilePanel = new TilePanel(this, lvl);
 		arrow = new Arrow(this, lvl);
 		brush = new Brush(this, lvl);
 		fillRect = new FillRect(this, lvl);
@@ -79,18 +81,19 @@ class Editor extends Screen {
 	
 	function initButtons():Void {
 		var i = Assets.images;
+		var h = BTN_SIZE;
 		
 		buttons = [
-			new Button({x: 0, y: tsize, img: i.icons_arrow, keys: [KeyCode.M]}),
-			new Button({x: 0, y: tsize*2, img: i.icons_paint_brush, keys: [KeyCode.B]}),
-			new Button({x: 0, y: tsize*3, img: i.icons_assembly_area, keys: [KeyCode.R]}),
-			new Button({x: 0, y: tsize*4, img: i.icons_pipette, keys: [KeyCode.P]}),
-			new Button({x: Screen.w - tsize, y: 0, img: i.icons_play, keys: [KeyCode.Zero]})
+			new Button({x: 0, y: h, img: i.icons_arrow, keys: [KeyCode.M]}),
+			new Button({x: 0, y: h * 2, img: i.icons_paint_brush, keys: [KeyCode.B]}),
+			new Button({x: 0, y: h * 3, img: i.icons_assembly_area, keys: [KeyCode.R]}),
+			new Button({x: 0, y: h * 4, img: i.icons_pipette, keys: [KeyCode.P]}),
+			new Button({x: Screen.w - h - tilePanel.w * tsize, y: 0, img: i.icons_play, keys: [KeyCode.Zero]})
 		];
 		if (Screen.touch) buttons = buttons.concat([
-			new Button({x: 0, y: tsize*5, img: i.icons_hand, keys: [KeyCode.H]}),
-			new Button({x: 0, y: Screen.h - tsize, img: i.icons_undo, keys: [KeyCode.Control, KeyCode.Z]}),
-			new Button({x: tsize, y: Screen.h - tsize, img: i.icons_redo, keys: [KeyCode.Control, KeyCode.Y]})
+			new Button({x: 0, y: h * 5, img: i.icons_hand, keys: [KeyCode.H]}),
+			new Button({x: 0, y: Screen.h - h, img: i.icons_undo, keys: [KeyCode.Control, KeyCode.Z]}),
+			new Button({x: h, y: Screen.h - h, img: i.icons_redo, keys: [KeyCode.Control, KeyCode.Y]})
 		]);
 		for (b in buttons) {
 			b.rect.w *= lvl.scale;
@@ -100,6 +103,7 @@ class Editor extends Screen {
 	
 	//@:allow(Pipette)
 	public function pipetteSet(layer:Int, tile:Int):Void {
+		if (this.layer != layer) this.layer = layer;
 		tiles[layer] = tile;
 	}
 	
@@ -121,6 +125,7 @@ class Editor extends Screen {
 			
 			if (key == KeyCode.S) {
 				keys[KeyCode.S] = false;
+				keys[KeyCode.Control] = keys[KeyCode.Meta] = false;
 				save(lvl.map);
 			}
 		}
@@ -146,15 +151,14 @@ class Editor extends Screen {
 		} else if (key == KeyCode.N) {
 			createMap();
 			
+		} else if (key == KeyCode.Nine) {
+			resizeMap();
+			
 		} else if (key == KeyCode.Q) {
-			tiles[layer]--;
-			if (tiles[layer] < 0) tiles[layer] = layerOffsets[layer];
-			if (tiles[layer] > layerOffsets[layer]) tiles[layer] = 0;
+			prevTile();
 			
 		} else if (key == KeyCode.E) {
-			tiles[layer]++;
-			if (tiles[layer] < 0) tiles[layer] = layerOffsets[layer];
-			if (tiles[layer] > layerOffsets[layer]) tiles[layer] = 0;
+			nextTile();
 			
 		} else if (key == KeyCode.Zero) {
 			hide();
@@ -173,7 +177,7 @@ class Editor extends Screen {
 		} else if (key == 189 || key == KeyCode.HyphenMinus) {
 			if (scale > 1) setScale(scale - 1);
 			
-		} else if (key == KeyCode.Equals) {
+		} else if (key == 187 || key == KeyCode.Equals) {
 			if (scale < 9) setScale(scale + 1);
 			
 		} else if (key == KeyCode.Escape) {
@@ -185,6 +189,18 @@ class Editor extends Screen {
 			//menu.show();
 			//menu.init(); //2
 		}
+	}
+	
+	inline function prevTile():Void {
+		tiles[layer]--;
+		if (tiles[layer] < 0) tiles[layer] = layerOffsets[layer];
+		if (tiles[layer] > layerOffsets[layer]) tiles[layer] = 0;
+	}
+	
+	inline function nextTile():Void {
+		tiles[layer]++;
+		if (tiles[layer] < 0) tiles[layer] = layerOffsets[layer];
+		if (tiles[layer] > layerOffsets[layer]) tiles[layer] = 0;
 	}
 	
 	function createMap():Void {
@@ -199,16 +215,81 @@ class Editor extends Screen {
 			layers: [
 				for (l in 0...lvl.map.layers.length) [
 					for (iy in 0...size.h) [
-						for (ix in 0...size.w) l == 0 ? 1 : 0
+						for (ix in 0...size.w) 0
 					]
 				]
-			],
-			objects: {
-				buttons: [],
-				panels: [],
-				texts: []
+			]
+		}
+		onMapLoad(map);
+		#end
+	}
+	
+	function resizeMap():Void {
+		#if kha_html5
+		var prompt = js.Browser.window.prompt; //[0, 1, 0, 1]
+		var addSize = Json.stringify([0, 0, 1, 0]);
+		var size:Array<Int> = Json.parse(prompt("Add Size [SX, EX, SY, EY]:", addSize));
+		if (size == null) return;
+		var map = lvl.map;
+		var sx = size[0];
+		var ex = size[1];
+		var sy = size[2];
+		var ey = size[3];
+		
+		var len = Std.int(Math.abs(sy));
+		for (l in 0...map.layers.length) {
+			for (i in 0...len) {
+				if (sy < 0) map.layers[l].shift();
+				else map.layers[l].unshift(map.layers[l][0].copy());
 			}
 		}
+		var len = Std.int(Math.abs(ey));
+		for (l in 0...map.layers.length) {
+			for (i in 0...len) {
+				if (ey < 0) map.layers[l].pop();
+				else {
+					var h = map.layers[l].length - 1;
+					map.layers[l].push(map.layers[l][h].copy());
+				}
+			}
+		}
+		map.h += sy + ey;
+		
+		var len = Std.int(Math.abs(sx));
+		for (l in 0...map.layers.length) {
+			for (i in 0...len)
+			for (iy in 0...map.h) {
+				if (sx < 0) map.layers[l][iy].shift();
+				else map.layers[l][iy].unshift(map.layers[l][iy][0]);
+			}
+		}
+		var len = Std.int(Math.abs(ex));
+		for (l in 0...map.layers.length) {
+			for (i in 0...len)
+			for (iy in 0...map.h) {
+				if (ex < 0) map.layers[l][iy].pop();
+				else {
+					var w = map.layers[l][iy].length - 1;
+					map.layers[l][iy].push(map.layers[l][iy][w]);
+				}
+			}
+		}
+		map.w += sx + ex;
+		
+		//TODO fix
+		for (o in map.objects.players) {
+			o.x += sx;
+			o.y += sy;
+		}
+		for (o in map.objects.enemys) {
+			o.x += sx;
+			o.y += sy;
+		}
+		for (o in map.objects.chests) {
+			o.x += sx;
+			o.y += sy;
+		}
+		
 		onMapLoad(map);
 		#end
 	}
@@ -282,10 +363,10 @@ class Editor extends Screen {
 	}
 	
 	inline function onFileLoad(file:Dynamic):Void {
-		var bytes = haxe.io.Bytes.ofData(file);
+		/*var bytes = haxe.io.Bytes.ofData(file);
 		var blob = kha.Blob.fromBytes(bytes);
 		var map = Old.loadMap(blob);
-		onMapLoad(map);
+		onMapLoad(map);*/
 	}
 	#end
 	
@@ -315,44 +396,55 @@ class Editor extends Screen {
 	}
 	
 	override function onMouseDown(p:Pointer):Void {
+		if (tilePanel.onDown(p, layer)) return;
 		if (Button.onDown(this, buttons, p)) return;
 		updateCursor(p);
 		tool.onMouseDown(p, layer, x, y, tiles[layer]);
 	}
 	
 	override function onMouseMove(p:Pointer):Void {
+		if (tilePanel.onMove(p)) return;
 		if (Button.onMove(this, buttons, p)) return;
 		updateCursor(p);
 		tool.onMouseMove(p, layer, x, y, tiles[layer]);
 	}
 	
 	override function onMouseUp(p:Pointer):Void {
+		if (tilePanel.onUp(p)) return;
 		if (Button.onUp(this, buttons, p)) return;
 		tool.onMouseUp(p, layer, x, y, tiles[layer]);
 	}
 	
+	override function onMouseWheel(delta:Int):Void {
+		if (delta == 1) prevTile();
+		else if (delta == -1) nextTile();
+	}
+	
 	override function onResize():Void {
-		var newScale = Std.int(Utils.getScale());
+		/*var newScale = Std.int(Utils.getScale());
 		if (newScale < 1) newScale = 1;
 		
 		if (newScale != scale) setScale(newScale);
 		else {
 			lvl.resize();
-		}
+		}*/
+		lvl.resize();
+		tilePanel.resize();
 		initButtons();
 	}
 	
-	override function onRescale(scale:Float):Void {
+	/*override function onRescale(scale:Float):Void {
 		lvl.rescale(scale);
-	}
+	}*/
 	
 	override function onUpdate():Void {
+		tilePanel.update();
 		tool.onUpdate();
 		
-		if (lvl.w * tsize < Screen.w
-			&& lvl.h * tsize < Screen.h) return;
+		/*if (lvl.w * tsize < Screen.w
+			&& lvl.h * tsize < Screen.h) return;*/
 		
-		var sx = 0.0, sy = 0.0, s = tsize/5;
+		var sx = 0.0, sy = 0.0, s = tsize / 5;
 		if (keys[KeyCode.Left] || keys[KeyCode.A]) sx += s;
 		if (keys[KeyCode.Right] || keys[KeyCode.D]) sx -= s;
 		if (keys[KeyCode.Up] || keys[KeyCode.W]) sy += s;
@@ -371,31 +463,39 @@ class Editor extends Screen {
 		var pw = lvl.map.w * tsize;
 		var ph = lvl.map.h * tsize;
 		var camera = lvl.camera;
-		var offset = tsize;
+		var offset = BTN_SIZE;
+		var maxW = w - pw - offset - tilePanel.w * tsize;
+		var maxH = h - ph - offset;
 		
 		if (camera.x > offset) camera.x = offset;
-		if (camera.x < w - pw - offset) camera.x = w - pw - offset;
+		if (camera.x < maxW) camera.x = maxW;
 		if (camera.y > offset) camera.y = offset;
-		if (camera.y < h - ph - offset) camera.y = h - ph - offset;
-		if (pw < w) camera.x = w/2 - pw/2;
-		if (ph < h) camera.y = h/2 - ph/2;
+		if (camera.y < maxH) camera.y = maxH;
+		if (pw < w - offset * 2 - tilePanel.w * tsize) camera.x = w/2 - pw/2;
+		if (ph < h - offset * 2) camera.y = h/2 - ph/2;
 		camera.x = Std.int(camera.x);
 		camera.y = Std.int(camera.y);
 	}
 	
-	override function onRender(frame:Framebuffer):Void {
+	override function onRender(frame:Image):Void {
 		var g = frame.g2;
 		g.begin(true, 0xFFBDC3CD);
+		g.color = 0x50000000;
+		g.drawRect(lvl.camera.x, lvl.camera.y - 1,
+			lvl.map.w * tsize + 1,
+			lvl.map.h * tsize + 2
+		);
 		lvl.drawLayers(g);
 		
 		tool.onRender(g);
 		drawCursor(g);
 		for (b in buttons) b.draw(g);
+		tilePanel.render(g);
 		
 		g.color = 0xFF000000;
 		g.font = Assets.fonts.OpenSans_Regular;
 		g.fontSize = 24;
-		var s = ""+layer+" | "+tiles[layer]+" | "+lvl.countObjects(layer)+" | "+toolName;
+		var s = "Layer: "+(layer+1)+" | Tile: "+tiles[layer]+" | Objects: "+lvl.countObjects(layer)+" | "+toolName;
 		g.drawString(s, 0, 0);
 		var fh = g.font.height(g.fontSize);
 		g.drawString(""+x+", "+y, 0, fh);
