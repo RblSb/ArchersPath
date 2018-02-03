@@ -18,6 +18,9 @@ import haxe.Json;
 
 class Editor extends Screen {
 	
+	var lvl:Lvl;
+	var tsize(get, never):Int;
+	function get_tsize() return lvl.tsize;
 	static inline var BTN_SIZE = 48;
 	var tilePanel:TilePanel;
 	var buttons:Array<Button>;
@@ -34,16 +37,16 @@ class Editor extends Screen {
 		toolName = arr[arr.length-1];
 		return tool;
 	}
-	var lvl:Lvl;
-	
-	var tsize(get, never):Int;
-	function get_tsize() return lvl.tsize;
-	var cursor:IPoint = {x: 0, y: 0};
-	var layer = 1;
-	var layerOffsets:Array<Int>;
+	public var layer = 1;
+	public var tile(get, set):Int;
+	function get_tile() return tiles[layer];
+	function set_tile(tile) return tiles[layer] = tile;
 	var tiles:Array<Int> = [];
+	var cursor:IPoint = {x: 0, y: 0};
+	var layerOffsets:Array<Int>;
 	var x = 0;
 	var y = 0;
+	var eraserMode = {tile: 0, layer: 0};
 	
 	public function new() {
 		super();
@@ -101,12 +104,6 @@ class Editor extends Screen {
 		}
 	}
 	
-	//@:allow(Pipette)
-	public function pipetteSet(layer:Int, tile:Int):Void {
-		if (this.layer != layer) this.layer = layer;
-		tiles[layer] = tile;
-	}
-	
 	//@:allow(Hand)
 	public function moveCamera(speed:Point):Void {
 		lvl.camera.x += speed.x;
@@ -130,9 +127,14 @@ class Editor extends Screen {
 			}
 		}
 		
-		if (key == KeyCode.M) {
+		if (key == KeyCode.Space) {
+			eraserMode.layer = layer;
+			eraserMode.tile = tile;
+			tile = 0;
+			
+		} else if (key == KeyCode.M) {
 			tool = arrow;
-		
+			
 		} else if (key == KeyCode.B) {
 			tool = brush;
 			
@@ -191,16 +193,23 @@ class Editor extends Screen {
 		}
 	}
 	
+	override function onKeyUp(key:KeyCode):Void {
+		if (key == KeyCode.Space) {
+			layer = eraserMode.layer;
+			tile = eraserMode.tile;
+		}
+	}
+	
 	inline function prevTile():Void {
-		tiles[layer]--;
-		if (tiles[layer] < 0) tiles[layer] = layerOffsets[layer];
-		if (tiles[layer] > layerOffsets[layer]) tiles[layer] = 0;
+		tile--;
+		if (tile < 0) tile = layerOffsets[layer];
+		if (tile > layerOffsets[layer]) tile = 0;
 	}
 	
 	inline function nextTile():Void {
-		tiles[layer]++;
-		if (tiles[layer] < 0) tiles[layer] = layerOffsets[layer];
-		if (tiles[layer] > layerOffsets[layer]) tiles[layer] = 0;
+		tile++;
+		if (tile < 0) tile = layerOffsets[layer];
+		if (tile > layerOffsets[layer]) tile = 0;
 	}
 	
 	function createMap():Void {
@@ -226,8 +235,8 @@ class Editor extends Screen {
 	
 	function resizeMap():Void {
 		#if kha_html5
-		var prompt = js.Browser.window.prompt; //[0, 1, 0, 1]
-		var addSize = Json.stringify([0, 0, 1, 0]);
+		var prompt = js.Browser.window.prompt;
+		var addSize = Json.stringify([0, 1, 0, 1]);
 		var size:Array<Int> = Json.parse(prompt("Add Size [SX, EX, SY, EY]:", addSize));
 		if (size == null) return;
 		var map = lvl.map;
@@ -396,23 +405,23 @@ class Editor extends Screen {
 	}
 	
 	override function onMouseDown(p:Pointer):Void {
-		if (tilePanel.onDown(p, layer)) return;
+		if (tilePanel.onDown(p)) return;
 		if (Button.onDown(this, buttons, p)) return;
 		updateCursor(p);
-		tool.onMouseDown(p, layer, x, y, tiles[layer]);
+		tool.onMouseDown(p, layer, x, y, tile);
 	}
 	
 	override function onMouseMove(p:Pointer):Void {
 		if (tilePanel.onMove(p)) return;
 		if (Button.onMove(this, buttons, p)) return;
 		updateCursor(p);
-		tool.onMouseMove(p, layer, x, y, tiles[layer]);
+		tool.onMouseMove(p, layer, x, y, tile);
 	}
 	
 	override function onMouseUp(p:Pointer):Void {
 		if (tilePanel.onUp(p)) return;
 		if (Button.onUp(this, buttons, p)) return;
-		tool.onMouseUp(p, layer, x, y, tiles[layer]);
+		tool.onMouseUp(p, layer, x, y, tile);
 	}
 	
 	override function onMouseWheel(delta:Int):Void {
@@ -481,9 +490,9 @@ class Editor extends Screen {
 		var g = frame.g2;
 		g.begin(true, 0xFFBDC3CD);
 		g.color = 0x50000000;
-		g.drawRect(lvl.camera.x, lvl.camera.y - 1,
+		g.drawRect(lvl.camera.x, lvl.camera.y,
 			lvl.map.w * tsize + 1,
-			lvl.map.h * tsize + 2
+			lvl.map.h * tsize + 1
 		);
 		lvl.drawLayers(g);
 		
@@ -495,7 +504,7 @@ class Editor extends Screen {
 		g.color = 0xFF000000;
 		g.font = Assets.fonts.OpenSans_Regular;
 		g.fontSize = 24;
-		var s = "Layer: "+(layer+1)+" | Tile: "+tiles[layer]+" | Objects: "+lvl.countObjects(layer)+" | "+toolName;
+		var s = "Layer: "+(layer+1)+" | Tile: "+tile+" | Objects: "+lvl.countObjects(layer)+" | "+toolName;
 		g.drawString(s, 0, 0);
 		var fh = g.font.height(g.fontSize);
 		g.drawString(""+x+", "+y, 0, fh);
@@ -517,17 +526,17 @@ class Editor extends Screen {
 		g.color = 0x88000000;
 		var px = x * tsize + lvl.camera.x;
 		var py = y * tsize + lvl.camera.y;
-		g.drawRect(px, py-1, tsize+1, tsize+1);
+		g.drawRect(px, py, tsize+1, tsize+1);
 		if (tool == arrow) return;
 		
-		if (tiles[layer] == 0) {
+		if (tile == 0) {
 			g.color = 0x88FF0000;
 			g.drawLine(px, py, px + tsize, py + tsize);
 			g.drawLine(px + tsize, py, px, py + tsize);
 		}
-		if (tiles[layer] < 1) return;
+		if (tile < 1) return;
 		g.color = 0xFFFFFFFF;
-		lvl.drawTile(g, layer, x, y, tiles[layer]);
+		lvl.drawTile(g, layer, x, y, tile);
 	}
 	
 }

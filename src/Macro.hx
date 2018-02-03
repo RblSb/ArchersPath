@@ -25,4 +25,8 @@ class Macro {
 		}
 	}
 	
+	public static macro function getBuildTime():Expr {
+		return macro $v{Date.now().toString()};
+	}
+	
 }

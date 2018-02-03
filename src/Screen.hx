@@ -44,7 +44,7 @@ class Screen {
 	static var fps = new FPS();
 	static var taskId:Int;
 	
-	public var scale(default, null) = 2.0;
+	public var scale(default, null) = 1.0;
 	var backbuffer = Image.createRenderTarget(1, 1);
 	public var keys:Map<Int, Bool> = new Map();
 	public var pointers:Map<Int, Pointer> = [
@@ -123,18 +123,18 @@ class Screen {
 		if (touch && Surface.get() != null) {
 			Surface.get().remove(_onTouchDown, _onTouchUp, _onTouchMove);
 		} else if (Mouse.get() != null) {
-			Mouse.get().remove(_onMouseDown, _onMouseUp, _onMouseMove, null);
+			Mouse.get().remove(_onMouseDown, _onMouseUp, _onMouseMove, onMouseWheel);
 		}
 	}
 	
 	inline function _onUpdate():Void {
+		if (Std.int(System.windowWidth() / scale) != w ||
+			Std.int(System.windowHeight() / scale) != h) _onResize();
 		onUpdate();
 		fps.update();
 	}
 	
 	inline function _onRender(framebuffer:Framebuffer):Void {
-		if (Std.int(System.windowWidth() / scale) != w ||
-			Std.int(System.windowHeight() / scale) != h) _onResize();
 		frame = backbuffer;
 		var g = frame.g2;
 		g.begin(false);
@@ -272,14 +272,14 @@ class Screen {
 private class FPS {
 	
 	public var fps = 0;
-	public var _frames = 0;
+	var _frames = 0;
 	var time = 0.0;
 	var lastTime = 0.0;
 	
 	public function new() {}
 	
 	public function update():Int {
-		var deltaTime = (Scheduler.realTime() - lastTime);
+		var deltaTime = Scheduler.realTime() - lastTime;
 		lastTime = Scheduler.realTime();
 		time += deltaTime;
 		

@@ -12,10 +12,8 @@ import js.html.Audio;
 
 class Main {
 	
-	//static var hxt = new hxtelemetry.HxTelemetry();
-	public static var music:Audio;
-	
 	static function main():Void {
+		trace(Macro.getBuildTime());
 		#if kha_html5 //make html5 canvas resizable
 		document.documentElement.style.padding = "0";
 		document.documentElement.style.margin = "0";
@@ -41,15 +39,6 @@ class Main {
 		khacks();
 		var loader = new Loader();
 		loader.init();
-		
-		#if kha_html5
-		music = new Audio('MoltenCrater.mp3');
-		music.addEventListener('ended', function() {
-			music.currentTime = 0;
-			music.play();
-		}, false);
-		music.play();
-		#end
 	}
 	
 	static inline function khacks():Void {
@@ -61,6 +50,7 @@ class Main {
 			else if (meta_key) SystemImpl.khanvas.onkeyup(e);
 			if (e.keyCode == KeyCode.Backspace) e.preventDefault();
 			keyDown(e);
+			return false;
 		}
 		
 		var keyUp = SystemImpl.khanvas.onkeyup;
@@ -73,6 +63,7 @@ class Main {
 		SystemImpl.khanvas.onkeypress = function(e) {
 			if (meta_key) e.preventDefault();
 			keyPress(e);
+			return false;
 		}
 		#end
 	}

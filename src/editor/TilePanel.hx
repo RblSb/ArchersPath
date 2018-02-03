@@ -13,10 +13,16 @@ class TilePanel {
 	public var x = 0;
 	public var w = 0;
 	public var h = 0;
-	static inline var OVER = 0xAA000000;
-	static inline var OUT = 0x77000000;
-	var color = OUT;
+	var minW = 2;
+	var maxW = 6;
 	var len = 0;
+	static inline var bgColor = 0xAA000000;
+	static inline var gridColor = 0x50000000;
+	static inline var selectColor = 0xAAFFFFFF;
+	static inline var OVER_ALPHA = 1;
+	static inline var OUT_ALPHA = 0.5;
+	var opacity = OUT_ALPHA;
+	var current = 0;
 	
 	public function new(editor:Editor, lvl:Lvl) {
 		this.editor = editor;
@@ -24,23 +30,21 @@ class TilePanel {
 		resize();
 	}
 	
-	public function onDown(p:Pointer, layer:Int):Bool {
+	public function onDown(p:Pointer):Bool {
 		var result = false;
 		if (check(p.x, p.y)) {
-			setTile(p, layer);
+			setTile(p);
 			result = true;
 		}
 		return result;
 	}
 	
-	inline function setTile(p:Pointer, defLayer:Int):Void {
+	inline function setTile(p:Pointer):Void {
 		var layerOffsets = lvl.getTilesOffset();
-		//trace(layerOffsets);
 		var tx = Std.int((p.x - x) / tsize);
 		var ty = Std.int((p.y - y) / tsize);
 		var layer = 0;
 		var tile = ty * w + tx;
-		//trace(tile);
 		for (off in layerOffsets) {
 			if (tile > off) {
 				tile -= off;
@@ -49,16 +53,16 @@ class TilePanel {
 		}
 		//trace(layer, tile);
 		if (layer == layerOffsets.length) return;
-		if (tile == 0) layer = defLayer;
-		editor.pipetteSet(layer, tile);
+		if (tile != 0) editor.layer = layer;
+		editor.tile = tile;
 	}
 	
 	public function onMove(p:Pointer):Bool {
 		var result = false;
 		if (check(p.x, p.y)) {
-			color = OVER;
+			opacity = OVER_ALPHA;
 			result = true;
-		} else color = OUT;
+		} else opacity = OUT_ALPHA;
 		return result;
 	}
 	
@@ -80,15 +84,38 @@ class TilePanel {
 	}
 	
 	public function update():Void {
-		len = lvl.tilesetW * lvl.tilesetH;
-		w = 2;
-		for (i in 0...5) if (y + len / w * tsize > Screen.h) w++;
+		current = currentTile();
+		len = 1;
+		var offs = lvl.getTilesOffset();
+		for (i in offs) len += i;
+		w = minW;
+		for (i in 0...maxW-minW) if (y + len / w * tsize > Screen.h) w++;
 		h = Math.ceil(len / w);
 		x = Screen.w - tsize * w;
 	}
 	
+	inline function currentTile():Int {
+		var id = editor.tile;
+		var layerOffsets = lvl.getTilesOffset();
+		for (i in 0...editor.layer) id += layerOffsets[i];
+		return id;
+	}
+	
 	public function render(g:Graphics):Void {
+		g.opacity = opacity;
 		drawBg(g, x, y, w, h);
+		drawGrid(g, x, y, w, h);
+		drawTiles(g, x, y, w, h);
+		drawSelected(g, x, y, w, h);
+		g.opacity = 1;
+	}
+	
+	inline function drawBg(g:Graphics, x:Int, y:Int, w:Int, h:Int):Void {
+		g.color = bgColor;
+		g.fillRect(x - 1, y, w * tsize + 1, h * tsize);
+	}
+	
+	inline function drawTiles(g:Graphics, x:Int, y:Int, w:Int, h:Int):Void {
 		var offX = 0;
 		var tx = 0;
 		var ty = 0;
@@ -107,12 +134,6 @@ class TilePanel {
 			ix = offX % (lvl.tilesetW * tsize);
 			iy = Std.int(offX / (lvl.tilesetW * tsize)) * tsize;
 		}
-		drawGrid(g, x, y, w, h);
-	}
-	
-	inline function drawBg(g:Graphics, x:Int, y:Int, w:Int, h:Int):Void {
-		g.color = color;
-		g.fillRect(x, y, w * tsize, h * tsize);
 	}
 	
 	inline function drawGrid(g:Graphics, x:Int, y:Int, w:Int, h:Int):Void {
@@ -120,7 +141,7 @@ class TilePanel {
 		var offX = 0;
 		var ix = 0;
 		var iy = 0;
-		g.color = color;
+		g.color = gridColor;
 		for (i in 0...len) {
 			g.drawRect(x + ix, y + iy, tsize, tsize);
 			offX += tsize;
@@ -128,6 +149,14 @@ class TilePanel {
 			iy = Std.int(offX / (w * tsize)) * tsize;
 		}
 		g.drawLine(x, y, x, y + iy);
+	}
+	
+	inline function drawSelected(g:Graphics, x:Int, y:Int, w:Int, h:Int):Void {
+		var offX = editor.tile == 0 ? 0 : current * tsize;
+		var ix = offX % (w * tsize);
+		var iy = Std.int(offX / (w * tsize)) * tsize;
+		g.color = selectColor;
+		g.drawRect(x + ix, y + iy, tsize, tsize);
 	}
 	
 }

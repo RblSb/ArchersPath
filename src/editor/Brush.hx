@@ -59,28 +59,29 @@ class Brush implements Tool {
 	}
 	
 	public function onMouseDown(p:Pointer, layer:Int, x:Int, y:Int, tile:Int):Void {
-		if (p.type == 1) tile = 0;
-		if (lvl.getTile(layer, x, y) == tile) return;
-		action(layer, x, y, tile);
+		action(p, layer, x, y, tile);
 	}
 	
 	public function onMouseMove(p:Pointer, layer:Int, x:Int, y:Int, tile:Int):Void {
-		if (p.type == 1) tile = 0;
-		if (lvl.getTile(layer, x, y) == tile) return;
-		if (p.isDown) action(layer, x, y, tile);
+		if (!p.isDown) return;
+		action(p, layer, x, y, tile);
 	}
 	
 	public function onMouseUp(p:Pointer, layer:Int, x:Int, y:Int, tile:Int):Void {
-		if (p.type == 1) tile = 0;
-		if (lvl.getTile(layer, x, y) == tile) return;
-		action(layer, x, y, tile);
+		action(p, layer, x, y, tile);
 	}
 	
 	public function onUpdate():Void {}
 	
 	public function onRender(g:Graphics):Void {}
 	
-	function action(layer:Int, x:Int, y:Int, tile:Int):Void {
+	function action(p:Pointer, layer:Int, x:Int, y:Int, tile:Int):Void {
+		if (p.type == 1) {
+			editor.tile = lvl.getTile(layer, x, y);
+			return;
+		}
+		if (lvl.getTile(layer, x, y) == tile) return;
+		
 		var old = lvl.getTile(layer, x, y);
 		var obj = lvl.getObject(layer, x, y);
 		var objType = obj == null ? tile : old;

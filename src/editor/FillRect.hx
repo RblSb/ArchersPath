@@ -85,7 +85,13 @@ class FillRect implements Tool {
 	}
 	
 	public function onMouseUp(p:Pointer, layer:Int, x:Int, y:Int, tile:Int):Void {
-		if (p.type == 1) tile = 0;
+		if (p.type == 1) {
+			if (x == start.x && y == start.y) {
+				editor.tile = lvl.getTile(layer, x, y);
+				start = end = null;
+				return;
+			} else tile = 0;
+		}
 		end = {
 			x: x,
 			y: y
@@ -110,9 +116,9 @@ class FillRect implements Tool {
 		var rect = makeRect(start, end);
 		var tsize = lvl.tsize;
 		g.drawRect(
-			rect.x * tsize + lvl.camera.x,
-			rect.y * tsize + lvl.camera.y-1,
-			(rect.w+1) * tsize+1, (rect.h+1) * tsize+1
+			rect.x * tsize + lvl.camera.x - 1,
+			rect.y * tsize + lvl.camera.y - 1,
+			(rect.w+1) * tsize+3, (rect.h+1) * tsize+3
 		);
 	}
 	

@@ -239,13 +239,11 @@ class Game extends Screen {
 		//renderPhase.add(new RenderMapBG());
 		renderPhase.add(new RenderMapTG());
 		
-		
 		renderPhase.add(new RenderChests());
 		renderPhase.add(new RenderBodies(this));
 		renderPhase.add(new RenderAnimations());
 		renderPhase.add(new RenderArrows());
 		renderPhase.add(new RenderAimLine());
-		
 		
 		renderPhase.add(new RenderPlayerLifebar());
 		renderPhase.add(new RenderPlayerMoneybar());
@@ -274,6 +272,9 @@ class Game extends Screen {
 		} else if (key == 187 || key == KeyCode.Equals) {
 			if (scale < 9) setScale(scale + 1);
 			
+		} else if (key == KeyCode.R) {
+			newGame();
+			
 		} else if (key == KeyCode.Escape) {
 			/*if (editor == null) {
 				editor = new Editor();
@@ -282,9 +283,6 @@ class Game extends Screen {
 				return;
 			}*/
 			if (editor != null) showEditor();
-		} else if (key == KeyCode.M) {
-			if (Main.music.paused) Main.music.play();
-			else Main.music.pause();
 		}
 	}
 	

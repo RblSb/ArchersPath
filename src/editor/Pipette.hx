@@ -38,8 +38,7 @@ class Pipette implements Tool {
 	public function onRender(g:Graphics):Void {}
 	
 	function action(layer:Int, x:Int, y:Int, tile:Int):Void {
-		var old = lvl.getTile(layer, x, y);
-		editor.pipetteSet(layer, old);
+		editor.tile = lvl.getTile(layer, x, y);
 	}
 	
 }

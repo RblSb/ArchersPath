@@ -477,11 +477,6 @@ class RenderGameEnd implements ISystem {
 				Screen.w/2 - g.font.width(g.fontSize, s)/2,
 				Screen.h/2 - g.font.height(g.fontSize)/2
 			);
-			var keys = game.player.get(Control).keys;
-			if (keys[kha.input.KeyCode.R]) {
-				game.newGame();
-				keys[kha.input.KeyCode.R] = false;
-			}
 			return;
 		}
 		if (lvl.map.objects.players.length == 0) return;
