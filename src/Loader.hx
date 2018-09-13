@@ -19,7 +19,7 @@ class Loader {
 		System.removeRenderListener(onRender);
 		
 		var sets = Settings.read();
-		Screen._init(sets.touchMode);
+		Screen.init({touch: sets.touchMode});
 		if (sets.lang == null) Lang.init();
 		else Lang.set(sets.lang);
 		Graphics._glyphs = Lang.fontGlyphs;

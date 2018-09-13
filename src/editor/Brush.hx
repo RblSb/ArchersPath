@@ -34,19 +34,19 @@ class Brush implements Tool {
 		if (hid == -1) return;
 		var h = h1[hid];
 		
-		h2.push({
+		h2.push({ //save current state
 			layer: h.layer,
 			x: h.x,
 			y: h.y,
 			tile: lvl.getTile(h.layer, h.x, h.y),
-			obj: lvl.getObject(h.layer, h.x, h.y),
-			objType: h.objType
+			obj: lvl.getObjects(h.x, h.y)
 		});
 		
+		//return previous state
 		lvl.setTile(h.layer, h.x, h.y, h.tile);
-		lvl.setObject(h.layer, h.x, h.y, h.objType, h.obj);
-		//trace(lvl.getTile(h.layer, h.x, h.y), lvl.getObject(h.layer, h.x, h.y));
-		trace(h.objType, h.obj);
+		lvl.setObject(h.layer, h.x, h.y, h.tile, h.obj);
+		
+		//trace(h.obj);
 		h1.pop();
 	}
 	
@@ -76,21 +76,21 @@ class Brush implements Tool {
 	public function onRender(g:Graphics):Void {}
 	
 	function action(p:Pointer, layer:Int, x:Int, y:Int, tile:Int):Void {
-		if (p.type == 1) {
-			editor.tile = lvl.getTile(layer, x, y);
+		var old = lvl.getTile(layer, x, y);
+		if (old == tile) return;
+		
+		if (p.type == 1) { //pipette
+			editor.tile = old;
 			return;
 		}
-		if (lvl.getTile(layer, x, y) == tile) return;
 		
-		var old = lvl.getTile(layer, x, y);
-		var obj = lvl.getObject(layer, x, y);
-		var objType = obj == null ? tile : old;
-		addHistory({layer: layer, x: x, y: y, tile: old, obj: obj, objType: objType});
+		var obj = lvl.getObjects(x, y);
+		addHistory({layer: layer, x: x, y: y, tile: old, obj: obj});
+		
 		lvl.setTile(layer, x, y, tile);
-		
-		lvl.setObject(layer, x, y, old, null);
-		var newObj = lvl.emptyObject(layer, tile, x, y);
+		var newObj = lvl.emptyObject(layer, tile);
 		lvl.setObject(layer, x, y, tile, newObj);
+		//if (newObj != null) lvl.setObject(layer, x, y, tile, newObj);
 	}
 	
 }

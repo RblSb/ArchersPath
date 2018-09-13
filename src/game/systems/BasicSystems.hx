@@ -479,7 +479,17 @@ class RenderGameEnd implements ISystem {
 			);
 			return;
 		}
-		if (lvl.map.objects.players.length == 0) return;
+		
+		var nobody = true;
+		for (o in lvl.map.objects)
+		switch (o) {
+		case Player:
+			nobody = false;
+			break;
+		default:
+		}
+		
+		if (nobody) return;
 		camera.y++;
 		if (animY > 0) animY--;
 		if (animY < 200) {

@@ -1,6 +1,6 @@
 package editor;
 
-import kha.Image;
+import kha.Canvas;
 import kha.graphics2.Graphics;
 import kha.input.KeyCode;
 import kha.Assets;
@@ -66,7 +66,9 @@ class Editor extends Screen {
 		
 		lvl = new Lvl();
 		lvl.init();
-		lvl.loadMap(0);
+		//lvl.loadMap(0);
+		var map = newMap({w: 10, h: 10});
+		lvl.loadCustomMap(map);
 		layerOffsets = lvl.getTilesOffset();
 		
 		tilePanel = new TilePanel(this, lvl);
@@ -112,6 +114,8 @@ class Editor extends Screen {
 	}
 	
 	override function onKeyDown(key:KeyCode):Void {
+		//trace(Std.random(100));
+		//trace(keys[KeyCode.Control], keys[KeyCode.S]);
 		if (keys[KeyCode.Control] || keys[KeyCode.Meta]) {
 			
 			if (key == KeyCode.Z) {
@@ -218,19 +222,31 @@ class Editor extends Screen {
 		var newSize = Json.stringify({w: 20, h: 20});
 		var size:ISize = Json.parse(prompt("Map Size:", newSize));
 		if (size == null) return;
+		var map = newMap(size);
+		onMapLoad(map);
+		#end
+	}
+	
+	function newMap(size:ISize):GameMap {
 		var map:GameMap = {
 			w: size.w,
 			h: size.h,
 			layers: [
-				for (l in 0...lvl.map.layers.length) [
+				for (l in 0...lvl.layersNum) [
 					for (iy in 0...size.h) [
 						for (ix in 0...size.w) 0
 					]
 				]
-			]
+			],
+			links: [
+				for (iy in 0...size.h) [
+					for (ix in 0...size.w) 0
+				]
+			],
+			objects: [null], //zero id unused
+			floatObjects: []
 		}
-		onMapLoad(map);
-		#end
+		return map;
 	}
 	
 	function resizeMap():Void {
@@ -245,62 +261,74 @@ class Editor extends Screen {
 		var sy = size[2];
 		var ey = size[3];
 		
-		var len = Std.int(Math.abs(sy));
-		for (l in 0...map.layers.length) {
-			for (i in 0...len) {
-				if (sy < 0) map.layers[l].shift();
-				else map.layers[l].unshift(map.layers[l][0].copy());
+		for (iy in 0...map.links.length) {
+			for (ix in 0...map.links[iy].length) {
+				if (iy < -sy) lvl.delObjects(ix, iy);
+				if (ix < -sx) lvl.delObjects(ix, iy);
+				if (iy > map.links.length-1 + ey) lvl.delObjects(ix, iy);
+				if (ix > map.links[iy].length-1 + ex) lvl.delObjects(ix, iy);
 			}
 		}
-		var len = Std.int(Math.abs(ey));
-		for (l in 0...map.layers.length) {
-			for (i in 0...len) {
-				if (ey < 0) map.layers[l].pop();
-				else {
-					var h = map.layers[l].length - 1;
-					map.layers[l].push(map.layers[l][h].copy());
-				}
-			}
-		}
+		
+		//TODO remove object layer, draw links layer
+		//for (layer in map.layers) resizeLayer(layer, size, true);
+		var len = map.layers.length - 1;
+		for (i in 0...len) resizeLayer(map.layers[i], size, true);
+		resizeLayer(map.layers[len], size, false);
+		resizeLayer(map.links, size, false);
+		
 		map.h += sy + ey;
-		
-		var len = Std.int(Math.abs(sx));
-		for (l in 0...map.layers.length) {
-			for (i in 0...len)
-			for (iy in 0...map.h) {
-				if (sx < 0) map.layers[l][iy].shift();
-				else map.layers[l][iy].unshift(map.layers[l][iy][0]);
-			}
-		}
-		var len = Std.int(Math.abs(ex));
-		for (l in 0...map.layers.length) {
-			for (i in 0...len)
-			for (iy in 0...map.h) {
-				if (ex < 0) map.layers[l][iy].pop();
-				else {
-					var w = map.layers[l][iy].length - 1;
-					map.layers[l][iy].push(map.layers[l][iy][w]);
-				}
-			}
-		}
 		map.w += sx + ex;
-		
-		//TODO fix
-		for (o in map.objects.players) {
-			o.x += sx;
-			o.y += sy;
-		}
-		for (o in map.objects.enemys) {
-			o.x += sx;
-			o.y += sy;
-		}
-		for (o in map.objects.chests) {
-			o.x += sx;
-			o.y += sy;
-		}
 		
 		onMapLoad(map);
 		#end
+	}
+	
+	function resizeLayer(layer:Array<Array<Int>>, size:Array<Int>, fill:Bool):Void {
+		var sx = size[0];
+		var ex = size[1];
+		var sy = size[2];
+		var ey = size[3];
+		
+		var len = Std.int(Math.abs(sy));
+		for (i in 0...len) {
+			if (sy < 0) layer.shift();
+			else {
+				var id = fill ? layer[0].copy() : [for (i in layer[0]) 0];
+				layer.unshift(id);
+			}
+		}
+		
+		var len = Std.int(Math.abs(ey));
+		for (i in 0...len) {
+			if (ey < 0) layer.pop();
+			else {
+				var h = layer.length - 1;
+				var id = fill ? layer[h].copy() : [for (i in layer[h]) 0];
+				layer.push(id);
+			}
+		}
+		
+		var len = Std.int(Math.abs(sx));
+		for (i in 0...len)
+		for (iy in 0...layer.length) {
+			if (sx < 0) layer[iy].shift();
+			else {
+				var id = fill ? layer[iy][0] : 0;
+				layer[iy].unshift(id);
+			}
+		}
+		
+		var len = Std.int(Math.abs(ex));
+		for (i in 0...len)
+		for (iy in 0...layer.length) {
+			if (ex < 0) layer[iy].pop();
+			else {
+				var w = layer[iy].length - 1;
+				var id = fill ? layer[iy][w] : 0;
+				layer[iy].push(id);
+			}
+		}
 	}
 	
 	function save(map:GameMap, name="map"):Void {
@@ -400,8 +428,8 @@ class Editor extends Screen {
 		y = Std.int(cursor.y / tsize - lvl.camera.y / tsize);
 		if (x < 0) x = 0;
 		if (y < 0) y = 0;
-		if (x > lvl.w-1) x = lvl.w-1;
-		if (y > lvl.h-1) y = lvl.h-1;
+		if (x > lvl.w - 1) x = lvl.w - 1;
+		if (y > lvl.h - 1) y = lvl.h - 1;
 	}
 	
 	override function onMouseDown(p:Pointer):Void {
@@ -437,7 +465,6 @@ class Editor extends Screen {
 		else {
 			lvl.resize();
 		}*/
-		lvl.resize();
 		tilePanel.resize();
 		initButtons();
 	}
@@ -449,9 +476,6 @@ class Editor extends Screen {
 	override function onUpdate():Void {
 		tilePanel.update();
 		tool.onUpdate();
-		
-		/*if (lvl.w * tsize < Screen.w
-			&& lvl.h * tsize < Screen.h) return;*/
 		
 		var sx = 0.0, sy = 0.0, s = tsize / 5;
 		if (keys[KeyCode.Left] || keys[KeyCode.A]) sx += s;
@@ -486,15 +510,16 @@ class Editor extends Screen {
 		camera.y = Std.int(camera.y);
 	}
 	
-	override function onRender(frame:Image):Void {
+	override function onRender(frame:Canvas):Void {
 		var g = frame.g2;
 		g.begin(true, 0xFFBDC3CD);
 		g.color = 0x50000000;
-		g.drawRect(lvl.camera.x, lvl.camera.y,
+		g.drawRect(lvl.camera.x, lvl.camera.y - 1,
 			lvl.map.w * tsize + 1,
 			lvl.map.h * tsize + 1
 		);
 		lvl.drawLayers(g);
+		lvl.drawLinks(g);
 		
 		tool.onRender(g);
 		drawCursor(g);
@@ -504,20 +529,11 @@ class Editor extends Screen {
 		g.color = 0xFF000000;
 		g.font = Assets.fonts.OpenSans_Regular;
 		g.fontSize = 24;
-		var s = "Layer: "+(layer+1)+" | Tile: "+tile+" | Objects: "+lvl.countObjects(layer)+" | "+toolName;
+		var s = "Layer: " + (layer+1) + " | Tile: " + tile + " | Objects: " + (lvl.map.objects.length-1);
 		g.drawString(s, 0, 0);
 		var fh = g.font.height(g.fontSize);
-		g.drawString(""+x+", "+y, 0, fh);
+		g.drawString(toolName + " | " + x + ", " + y, 0, fh);
 		
-		#if debug
-		for (p in pointers) {
-			if (!p.used) continue;
-			if (p.isDown) g.color = 0xFFFF0000;
-			else g.color = 0xFFFFFFFF;
-			g.fillRect(p.x-1, p.y-1, 2, 2);
-		}
-		#end
-		debugScreen(g);
 		g.end();
 	}
 	
@@ -525,14 +541,14 @@ class Editor extends Screen {
 		if (tool == hand) return;
 		g.color = 0x88000000;
 		var px = x * tsize + lvl.camera.x;
-		var py = y * tsize + lvl.camera.y;
-		g.drawRect(px, py, tsize+1, tsize+1);
+		var py = y * tsize + lvl.camera.y - 1;
+		g.drawRect(px, py, tsize + 1, tsize + 1);
 		if (tool == arrow) return;
 		
 		if (tile == 0) {
 			g.color = 0x88FF0000;
-			g.drawLine(px, py, px + tsize, py + tsize);
-			g.drawLine(px + tsize, py, px, py + tsize);
+			g.drawLine(px, py + 1, px + tsize, py + tsize + 1);
+			g.drawLine(px + tsize, py + 1, px, py + tsize + 1);
 		}
 		if (tile < 1) return;
 		g.color = 0xFFFFFFFF;

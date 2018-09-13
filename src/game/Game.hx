@@ -1,6 +1,6 @@
 package game;
 
-import kha.Image;
+import kha.Canvas;
 import kha.input.KeyCode;
 import kha.Assets;
 import edge.Engine;
@@ -116,26 +116,26 @@ class Game extends Screen {
 	}*/
 	
 	public function newGame():Void {
-		engine.clear();
+		/*engine.clear();
 		var text = Assets.blobs.player_json.toString();
 		var json = haxe.Json.parse(text);
 		var sp = new SpritesetParser();
 		var frameSets = sp.parse(json);
 		var objects = lvl.map.objects;
-		
+
 		var spawn = objects.players[0];
 		if (spawn != null) {
 			if (startLife == null) startLife = new Life(true, 30);
 			if (startPlayer == null) startPlayer = new Player();
-			
+
 			var sLife = new Life(true, startLife.maxHp);
 			sLife.hp = startLife.hp;
-			
+
 			var sPlayer = new Player();
 			sPlayer.arrowType = startPlayer.arrowType;
 			sPlayer.maxJump = startPlayer.maxJump;
 			sPlayer.money = startPlayer.money;
-			
+
 			var p = engine.create([
 				sPlayer,
 				sLife,
@@ -152,10 +152,10 @@ class Game extends Screen {
 				new Moneybar(),
 				new Bow()
 			]);
-			
+
 			player = p;
 		}
-		
+
 		for (enemy in objects.enemys) {
 			switch(enemy.type) {
 			case "Imp":
@@ -199,7 +199,7 @@ class Game extends Screen {
 				]);
 			}
 		}
-		
+
 		for (chest in objects.chests) {
 			engine.create([
 				new Chest(chest.reward),
@@ -209,7 +209,7 @@ class Game extends Screen {
 				new Position(chest.x * lvl.tsize, chest.y * lvl.tsize - 8),
 				new Size(32, 40),
 			]);
-		}
+		}*/
 		
 		updatePhase = engine.createPhase();
 		renderPhase = engine.createPhase();
@@ -250,15 +250,11 @@ class Game extends Screen {
 		renderPhase.add(new RenderGameEnd(this));
 	}
 	
-	override function onResize():Void {
-		lvl.resize();
-	}
-	
 	override function onUpdate():Void {
 		updatePhase.update(1/60);
 	}
 	
-	override function onRender(frame:Image):Void {
+	override function onRender(frame:Canvas):Void {
 		renderPhase.update(1/60);
 	}
 	

@@ -9,13 +9,13 @@ class TilePanel {
 	function get_tsize() return lvl.tsize;
 	var editor:Editor;
 	var lvl:Lvl;
-	public var y = 0;
 	public var x = 0;
+	public var y = 0;
 	public var w = 0;
 	public var h = 0;
 	var minW = 2;
 	var maxW = 6;
-	var len = 0;
+	var tiles = 0;
 	static inline var bgColor = 0xAA000000;
 	static inline var gridColor = 0x50000000;
 	static inline var selectColor = 0xAAFFFFFF;
@@ -51,7 +51,6 @@ class TilePanel {
 				layer++;
 			} else break;
 		}
-		//trace(layer, tile);
 		if (layer == layerOffsets.length) return;
 		if (tile != 0) editor.layer = layer;
 		editor.tile = tile;
@@ -85,12 +84,16 @@ class TilePanel {
 	
 	public function update():Void {
 		current = currentTile();
-		len = 1;
+		tiles = 1;
 		var offs = lvl.getTilesOffset();
-		for (i in offs) len += i;
+		for (i in offs) tiles += i;
+		
 		w = minW;
-		for (i in 0...maxW-minW) if (y + len / w * tsize > Screen.h) w++;
-		h = Math.ceil(len / w);
+		for (i in 0...maxW-minW) {
+			h = Math.ceil(tiles / w);
+			if (y + h * tsize > Screen.h) w++;
+		}
+		h = Math.ceil(tiles / w);
 		x = Screen.w - tsize * w;
 	}
 	
@@ -122,7 +125,7 @@ class TilePanel {
 		var ix = 0;
 		var iy = 0;
 		g.color = 0xFFFFFFFF;
-		for (i in 0...len) {
+		for (i in 0...tiles) {
 			g.drawSubImage(
 				lvl.tileset,
 				x + tx, y + ty,
@@ -137,12 +140,12 @@ class TilePanel {
 	}
 	
 	inline function drawGrid(g:Graphics, x:Int, y:Int, w:Int, h:Int):Void {
-		var len = w * h;
+		var tiles = w * h;
 		var offX = 0;
 		var ix = 0;
 		var iy = 0;
 		g.color = gridColor;
-		for (i in 0...len) {
+		for (i in 0...tiles) {
 			g.drawRect(x + ix, y + iy, tsize, tsize);
 			offX += tsize;
 			ix = offX % (w * tsize);

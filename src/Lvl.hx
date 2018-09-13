@@ -4,7 +4,6 @@ import kha.graphics2.Graphics;
 import kha.Image;
 import kha.Assets;
 import kha.Blob;
-import kha.System;
 import Types.IPoint;
 import Types.Point;
 import Types.Rect;
@@ -41,7 +40,7 @@ abstract Slope(Int) from Int to Int {
 	}
 	
 	public static function rotate(type:Slope):Slope {
-		return new Slope(switch(type) {
+		return new Slope(switch (type) {
 			case HALF_B: HALF_L;
 			case HALF_T: HALF_R;
 			case HALF_L: HALF_T;
@@ -59,7 +58,7 @@ abstract Slope(Int) from Int to Int {
 	}
 	
 	public static function flipX(type:Slope):Slope {
-		return new Slope(switch(type) {
+		return new Slope(switch (type) {
 			case HALF_L: HALF_R;
 			case HALF_R: HALF_L;
 			case HALF_BL: HALF_BR;
@@ -75,7 +74,7 @@ abstract Slope(Int) from Int to Int {
 	}
 	
 	public static function flipY(type:Slope):Slope {
-		return new Slope(switch(type) {
+		return new Slope(switch (type) {
 			case HALF_B: HALF_T;
 			case HALF_T: HALF_B;
 			case HALF_BL: HALF_TL;
@@ -97,19 +96,25 @@ typedef GameMap = { //map format
 	w:Int,
 	h:Int,
 	layers:Array<Array<Array<Int>>>,
-	?objects:Objects
+	links:Array<Array<Int>>, //for objects
+	objects:Array<GameObject>,
+	floatObjects:Array<FloatObject>
 }
 
-typedef Objects = {
-	players:Array<Object>,
-	enemys:Array<Object>,
-	chests:Array<Object>,
+enum GameObject { //TODO autogen
+	Empty;
+	Player;
+	End;
+	Death;
+	Chest(reward:String);
+	Enemy(type:String);
+	Arr(arr:Array<GameObject>);
+	//Float(rect:Types.Rect, obj:GameObject);
+	Err();
 }
 
-typedef Object = {
-	>IPoint,
-	?type:String,
-	?reward:String
+enum FloatObject {
+	Rect(rect:Types.Rect);
 }
 
 class Lvl {
@@ -121,30 +126,31 @@ class Lvl {
 	var spritesLink:Array<Array<Int>>;
 	var spritesOffset:Array<Array<Int>>;
 	var layersOffset:Array<Int>;
-	var layersNum:Int;
-	var tilesNum:Int;
+	public var layersNum:Int;
+	public var tilesNum:Int;
 	var props:Array<Array<Props>>;
 	
 	public var map(default, null):GameMap;
 	public var w(get, never):Int;
 	public var h(get, never):Int;
-	function get_w():Int return map.w;
-	function get_h():Int return map.h;
+	inline function get_w() return map.w;
+	inline function get_h() return map.h;
 	
-	var screenW = 0; //size of screen in tiles
-	var screenH = 0;
+	var screenW(get, never):Int;
+	var screenH(get, never):Int;
+	inline function get_screenW() return Math.ceil(Screen.w / tsize) + 1;
+	inline function get_screenH() return Math.ceil(Screen.h / tsize) + 1;
 	public var tileset(default, null):Image;
 	public var tilesetW(default, null):Int;
 	public var tilesetH(default, null):Int;
 	public var tsize(default, null) = 0; //tile size
-	public var scale(default, null) = 1.0; //tile scale
+	public var scale(default, null) = 1.0; //TODO remove
 	public var camera = {x: 0.0, y: 0.0};
 	
 	public function new() {}
 	
 	public function init():Void {
 		initTiles();
-		resize();
 	}
 	
 	function initTiles():Void {
@@ -186,28 +192,33 @@ class Lvl {
 		initMap(this.map);
 	}
 	
+	inline function initMap(map:GameMap):Void { //TODO del
+		/*if (map.objects == null) map.objects = {
+			players: [],
+			enemys: [],
+			chests: []
+		};*/
+	}
+	
 	public function copyMap(map:GameMap):GameMap {
 		var layers:Array<Array<Array<Int>>> = [
 			for (l in map.layers) [
 				for (iy in 0...l.length) l[iy].copy()
 			]
 		];
+		var links:Array<Array<Int>> = [
+			for (iy in 0...map.links.length) map.links[iy].copy()
+		];
 		var copy:GameMap = {
 			name: map.name,
 			w: map.w,
 			h: map.h,
 			layers: layers,
-			objects: map.objects
+			links: links,
+			objects: map.objects.copy(),
+			floatObjects: map.floatObjects.copy()
 		}
 		return copy;
-	}
-	
-	inline function initMap(map:GameMap):Void {
-		if (map.objects == null) map.objects = {
-			players: [],
-			enemys: [],
-			chests: []
-		};
 	}
 	
 	public function getTile(layer:Int, x:Int, y:Int):Int {
@@ -285,21 +296,21 @@ class Lvl {
 		g.color = 0xFFFFFFFF;
 		
 		for (iy in sy...ey)
-			for (ix in sx...ex) {
-				var id = map.layers[layer][iy][ix];
-				if (id != 0) id += layersOffset[layer];
+		for (ix in sx...ex) {
+			var id = map.layers[layer][iy][ix];
+			if (id != 0) id += layersOffset[layer];
 				
-				if (id > 0) {
-					g.drawSubImage(
-						tileset,
-						ix * tsize + camX,
-						iy * tsize + camY,
-						(id % tilesetW) * tsize,
-						Std.int(id / tilesetW) * tsize,
-						tsize, tsize
-					);
-				}
+			if (id > 0) {
+				g.drawSubImage(
+					tileset,
+					ix * tsize + camX,
+					iy * tsize + camY,
+					(id % tilesetW) * tsize,
+					Std.int(id / tilesetW) * tsize,
+					tsize, tsize
+				);
 			}
+		}
 		
 		
 		#if debug
@@ -316,9 +327,37 @@ class Lvl {
 		for (l in 0...layersNum) drawLayer(g, l);
 	}
 	
-	public function resize():Void {
-		screenW = Math.ceil(Screen.w / tsize) + 1;
-		screenH = Math.ceil(Screen.h / tsize) + 1;
+	public function drawLinks(g:Graphics):Void {
+		var ctx = -Std.int(camera.x / tsize);
+		var cty = -Std.int(camera.y / tsize);
+		var ctw = ctx + screenW;
+		var cth = cty + screenH;
+		var camX = Std.int(camera.x);
+		var camY = Std.int(camera.y);
+		
+		//tiles offset
+		var sx = ctx < 0 ? 0 : ctx;
+		var sy = cty < 0 ? 0 : cty;
+		var ex = ctw > map.w ? map.w : ctw;
+		var ey = cth > map.h ? map.h : cth;
+		g.color = 0x77FFFFFF;
+		
+		for (iy in sy...ey)
+		for (ix in sx...ex) {
+			var id = map.links[iy][ix];
+			if (id != 0) id = Type.enumIndex(map.objects[id]) + layersOffset[layersNum-1];
+			
+			if (id > 0) {
+				g.drawSubImage(
+					tileset,
+					ix * tsize + camX - 4,
+					iy * tsize + camY - 4,
+					(id % tilesetW) * tsize,
+					Std.int(id / tilesetW) * tsize,
+					tsize, tsize
+				);
+			}
+		}
 	}
 	
 	function _rescale(scale:Float):Void {
@@ -330,7 +369,6 @@ class Lvl {
 		tileset = Image.createRenderTarget(w, h);
 		var g = tileset.g2;
 		g.begin(true, 0x0);
-		Screen.pipeline(g);
 		g.drawScaledImage(origTileset, 0, 0, w, h);
 		g.end();
 		
@@ -339,77 +377,71 @@ class Lvl {
 	
 	public function rescale(scale:Float):Void {
 		_rescale(scale);
-		resize();
 	}
 	
-	public function getObject(layer:Int, x:Int, y:Int):Object {
-		var id = getTile(layer, x, y);
-		switch(layer) {
-		case 2:
-			if (id == 1) return _getObject(map.objects.players, x, y);
-			else if (id == 4) return _getObject(map.objects.chests, x, y);
-			else if (id == 5) return _getObject(map.objects.enemys, x, y);
+	public inline function getObject(x:Int, y:Int):GameObject {
+		return getObjects(x, y);
+	}
+	
+	public inline function getObjects(x:Int, y:Int):GameObject {
+		var id = map.links[y][x];
+		return map.objects[id];
+	}
+	
+	public inline function setObject(layer:Int, x:Int, y:Int, tile:Int, obj:GameObject):Void {
+		if (obj == null) {
+			delObject(layer, x, y, tile);
+			return;
 		}
-		
-		return null;
+		//TODO not only one object on layer
+		var id = map.links[y][x];
+		if (id > 0) map.objects[id] = obj;
+		else map.links[y][x] = map.objects.push(obj) - 1;
 	}
 	
-	inline function _getObject(arr:Array<Object>, x:Int, y:Int):Object {
-		var obj:Object = null;
-		if (arr != null) for (o in arr)
-			if (o != null && o.x == x && o.y == y) {
-				obj = o;
-				break;
-			}
-		return obj;
+	public inline function delObject(layer:Int, x:Int, y:Int, tile:Int):Void {
+		if (emptyObject(layer, tile) == null) return;
+		//TODO not only one object on layer
+		delObjects(x, y);
 	}
 	
-	public function setObject(layer:Int, x:Int, y:Int, id:Int, obj:Object):Void {
-		switch(layer) {
-		case 2:
-			switch(id) {
-			case 1: _setObject(map.objects.players, x, y, obj);
-			case 4: _setObject(map.objects.chests, x, y, obj);
-			case 5: _setObject(map.objects.enemys, x, y, obj);
-			}
+	public inline function setObjects(x:Int, y:Int, obj:GameObject):Void {
+		if (obj == null) {
+			delObjects(x, y);
+			return;
+		}
+		var id = map.links[y][x];
+		if (id > 0) map.objects[id] = obj;
+		else map.links[y][x] = map.objects.push(obj) - 1;
+	}
+	
+	public inline function delObjects(x:Int, y:Int):Void {
+		var id = map.links[y][x];
+		map.links[y][x] = 0;
+		if (map.objects[id] != null) {
+			map.objects.remove(map.objects[id]);
+			recountLinks(id);
 		}
 	}
 	
-	inline function _setObject(arr:Array<Object>, x:Int, y:Int, obj:Object) {
-		var isNew = true;
-		if (arr != null) for (o in arr) {
-			if (o == null) {
-				arr.remove(o);
-				continue;
-			}
-			if (o.x == x && o.y == y) {
-				if (obj == null) arr.remove(o);
-				else o = obj;
-				isNew = false;
-			}
-		}
-		if (isNew) arr.push(obj);
+	inline function recountLinks(id:Int):Void {
+		for (iy in 0...map.links.length)
+			for (ix in 0...map.links[iy].length)
+				if (map.links[iy][ix] > id) map.links[iy][ix]--;
 	}
 	
-	public function emptyObject(layer:Int, tile:Int, x:Int, y:Int):Object {
-		switch(layer) {
-		case 2:
-			switch(tile) {
-				case 1: return {x: x, y: y};
-				case 4: return {x: x, y: y, reward: "LIFE"};
-				case 5: return {x: x, y: y, type: "Imp"};
-			}
+	public function emptyObject(layer:Int, tile:Int):GameObject {
+		switch (layer) { //TODO autogen
+			case 2:
+				switch (tile) {
+				case 0: return null; //Empty;
+				case 1: return Player;
+				case 4: return Chest("LIFE");
+				case 5: return Enemy("Imp");
+				default: return null;
+				}
+			default: return null;
 		}
-		return null;
-	}
-	
-	public function countObjects(layer:Int):Int {
-		var o = map.objects;
-		switch(layer) {
-		case 2:
-			return o.players.length + o.chests.length + o.enemys.length;
-		}
-		return 0;
 	}
 	
 	public function updateCamera():Void {
@@ -510,7 +542,6 @@ private class TilesetGenerator {
 		tileset = Image.createRenderTarget(tilesetW * tsize, tilesetH * tsize);
 		var g = tileset.g2;
 		g.begin(true, 0x0);
-		Screen.pipeline(g);
 		pushOffset();
 		
 		for (l in 0...layersNum) {
@@ -525,7 +556,7 @@ private class TilesetGenerator {
 				addProps(l, tile);
 				tilesN++;
 				
-				for (add in tile.add) switch(add) {
+				for (add in tile.add) switch (add) {
 				case "rotate":
 					for (i in 1...4) {
 						drawRotatedTile(g, bmd, 0, i * 90);
@@ -562,7 +593,7 @@ private class TilesetGenerator {
 					spritesN++;
 				}
 				
-				for (add in tile.add) switch(add) {
+				for (add in tile.add) switch (add) {
 				case "rotate":
 					for (i2 in 1...4) {
 						saveSpriteOffset(l, tile.id + i2, frames);
@@ -614,7 +645,7 @@ private class TilesetGenerator {
 			for (tile in layer) {
 				var bmd = loadTile(l, tile.file);
 				var num = Std.int(bmd.width / tsize);
-				for (add in tile.add) switch(add) {
+				for (add in tile.add) switch (add) {
 				case "rotate": count += num * 3;
 				case "flipX", "flipY": count += num;
 				default:
@@ -682,7 +713,7 @@ private class TilesetGenerator {
 		//var tile = Reflect.copy(tile);
 		addProps(l, tile);
 		var tile = props[l][props[l].length-1];
-		switch(type) {
+		switch (type) {
 		case "rotate90": tile.type = Slope.rotate(tile.type);
 		case "rotate180": for (i in 0...2) tile.type = Slope.rotate(tile.type);
 		case "rotate270": for (i in 0...3) tile.type = Slope.rotate(tile.type);

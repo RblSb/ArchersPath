@@ -37,24 +37,13 @@ class FillRect implements Tool {
 		var hid = h1.length - 1;
 		if (hid == -1) return;
 		var h = h1[hid];
-		var olds:Array<Array<Int>> = [];
-		var th = h.y + h.tiles.length;
-		var tw = h.x + h.tiles[0].length;
-		for (iy in h.y...th) {
-			var ty = iy - h.y;
-			olds[ty] = [];
-			for (ix in h.x...tw) {
-				var tx = ix - h.x;
-				olds[ty][tx] = lvl.getTile(h.layer, ix, iy);
-				if (lvl.getObject(h.layer, ix, iy) != null) continue; //fix
-				lvl.setTile(h.layer, ix, iy, h.tiles[ty][tx]);
-			}
-		}
+		
+		var olds = copyRect(h.rect, h.layer);
+		fillTiles(h.rect, h.layer, h.tiles);
 		
 		h2.push({
 			layer: h.layer,
-			x: h.x,
-			y: h.y,
+			rect: h.rect,
 			tiles: olds
 		});
 		h1.pop();
@@ -90,7 +79,9 @@ class FillRect implements Tool {
 				editor.tile = lvl.getTile(layer, x, y);
 				start = end = null;
 				return;
-			} else tile = 0;
+			}
+			//else clear area
+			tile = 0;
 		}
 		end = {
 			x: x,
@@ -125,19 +116,44 @@ class FillRect implements Tool {
 	inline function fill(layer:Int, tile:Int):Void {
 		if (start == null || end == null) return;
 		var rect = makeRect(start, end);
-		var olds:Array<Array<Int>> = [];
 		
+		var newObj = lvl.emptyObject(layer, tile);
+		if (newObj != null) return;
+		
+		var olds = copyRect(rect, layer);
+		fillRect(rect, layer, tile);
+		
+		addHistory({layer: layer, rect: rect, tiles: olds});
+	}
+	
+	inline function copyRect(rect:IRect, layer:Int):Array<Array<Int>> {
+		var arr:Array<Array<Int>> = [];
 		for (iy in rect.y...rect.y+rect.h+1) {
 			var ty = iy - rect.y;
-			olds[ty] = [];
+			arr[ty] = [];
 			for (ix in rect.x...rect.x+rect.w+1) {
 				var tx = ix - rect.x;
-				if (lvl.getObject(layer, ix, iy) != null) continue; //fix
-				olds[ty][tx] = lvl.getTile(layer, ix, iy);
-				lvl.setTile(layer, ix, iy, tile);
+				arr[ty][tx] = lvl.getTile(layer, ix, iy);
 			}
 		}
-		addHistory({layer: layer, x: rect.x, y: rect.y, tiles: olds});
+		return arr;
+	}
+	
+	inline function fillRect(rect:IRect, layer:Int, tile:Int):Void {
+		for (iy in rect.y...rect.y+rect.h+1)
+		for (ix in rect.x...rect.x+rect.w+1) {
+			lvl.setTile(layer, ix, iy, tile);
+		}
+	}
+	
+	inline function fillTiles(rect:IRect, layer:Int, tiles:Array<Array<Int>>):Void {
+		for (iy in rect.y...rect.y+rect.h+1) {
+			var ty = iy - rect.y;
+			for (ix in rect.x...rect.x+rect.w+1) {
+				var tx = ix - rect.x;
+				lvl.setTile(layer, ix, iy, tiles[ty][tx]);
+			}
+		}
 	}
 	
 }

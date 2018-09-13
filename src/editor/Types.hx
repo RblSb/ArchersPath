@@ -1,19 +1,18 @@
 package editor;
 
-import Lvl.Object;
+import Types.IRect;
+import Lvl.GameObject;
 
 typedef History = {
 	layer:Int,
 	x:Int,
 	y:Int,
 	tile:Int,
-	?obj:Object,
-	?objType:Int
+	?obj:GameObject
 }
 
 typedef ArrHistory = {
 	layer:Int,
-	x:Int,
-	y:Int,
+	rect:IRect,
 	tiles:Array<Array<Int>>
 }

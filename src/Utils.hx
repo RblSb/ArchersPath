@@ -80,13 +80,6 @@ class Utils {
 		return ((u >= 0) && (v >= 0) && (u + v < 1));
 	}
 	
-	public static inline function traceOnly(data:Dynamic) {
-		#if js
-		js.Browser.window.console.clear();
-		js.Browser.window.console.log(data);
-		#end
-	}
-	
 }
 
 class Easing {
