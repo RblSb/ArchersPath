@@ -7,7 +7,7 @@ using haxe.macro.Tools;
 #end
 
 class Macro {
-	
+
 	public static macro function fromString(typePath:Expr):Expr {
 		var type = Context.getType(typePath.toString());
 		switch (type.follow()) {
@@ -24,9 +24,9 @@ class Macro {
 		default: throw new Error(type.toString() + " should be @:enum abstract", typePath.pos);
 		}
 	}
-	
+
 	public static macro function getBuildTime():Expr {
 		return macro $v{Date.now().toString()};
 	}
-	
+
 }
