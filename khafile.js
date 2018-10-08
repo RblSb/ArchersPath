@@ -7,7 +7,7 @@ project.addAssets('res/**', {
 project.addSources('src');
 project.addLibrary('thx.core');
 project.addLibrary("edge");
-//project.addDefine('debug');
+project.addDefine('khmProps=game.CustomData.TileProps');
 project.addParameter('-dce full');
 
 resolve(project);

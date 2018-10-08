@@ -10,12 +10,12 @@ private typedef Spriteset = {
 };
 
 class SpritesetParser {
-	
+
 	public function new() {}
-	
+
 	public function parse(json:Spriteset):Map<String, Array<Int>> {
 		var map = new Map<String, Array<Int>>();
-		
+
 		for (set in json.sets) {
 			map[set.id] = [];
 			if (set.frames != null) {
@@ -28,5 +28,5 @@ class SpritesetParser {
 		}
 		return map;
 	}
-	
+
 }

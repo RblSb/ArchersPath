@@ -14,6 +14,7 @@ class BuildSystem {
   macro public static function complete() : Array<Field> {
     var fields = Context.getBuildFields(),
         type = Context.getLocalClass().get();
+        //trace(Context.getLocalClass());
     checkUpdate(fields);
     injectToString(type, fields);
     injectConstructor(type, fields);

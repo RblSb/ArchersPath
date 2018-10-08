@@ -1,8 +1,8 @@
 package;
 
 import kha.System;
-import kha.SystemImpl;
-import kha.input.KeyCode;
+import kha.Window;
+import khm.Macro;
 #if kha_html5
 import js.html.CanvasElement;
 import js.Browser.document;
@@ -12,8 +12,22 @@ import js.Browser.window;
 class Main {
 
 	static function main():Void {
-		trace(Macro.getBuildTime());
-		#if kha_html5 //make html5 canvas resizable
+		#if kha_html5
+		haxe.Log.trace(Macro.getBuildTime());
+		#end
+		setFullWindowCanvas();
+
+		System.start({title: "Archer's Path", width: 800, height: 600}, init);
+	}
+
+	static function init(window:Window):Void {
+		var loader = new Loader();
+		loader.init();
+	}
+
+	static function setFullWindowCanvas():Void {
+		#if kha_html5
+		// make html5 canvas resizable
 		document.documentElement.style.padding = "0";
 		document.documentElement.style.margin = "0";
 		document.body.style.padding = "0";
@@ -30,13 +44,6 @@ class Main {
 		window.onresize = resize;
 		resize();
 		#end
-
-		System.init({title: "Archer's Path", width: 800, height: 600}, init);
-	}
-
-	static function init():Void {
-		var loader = new Loader();
-		loader.init();
 	}
 
 }

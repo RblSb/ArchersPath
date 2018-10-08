@@ -3,21 +3,22 @@ package game;
 import kha.Image;
 import edge.IComponent;
 import edge.Entity;
-import Screen.Pointer;
-import Types.Point;
-import Types.Rect;
+import khm.Screen;
+import khm.Screen.Pointer;
+import khm.Macro.EnumAbstractTools;
+import khm.Types.Point;
 
 class Camera implements IComponent {}
 
 class Body implements IComponent {
 	var friction = 0.25;
-	//var gravity = 0.2;
+	// var gravity = 0.2;
 	var jump = -4.2;
 	var landSX = 0.6;
 	var airSX = 0.20;
 	var maxRunSX = 3;
-	//var maxSpeed = 50;
-	public function new(maxRunSX=3) {
+	// var maxSpeed = 50;
+	public function new(maxRunSX = 3) {
 		this.maxRunSX = maxRunSX;
 	}
 }
@@ -26,8 +27,8 @@ class Position implements IComponent {
 	var x:Float;
 	var y:Float;
 	var fixed:Bool;
-	
-	public function new(x:Float, y:Float, fixed=false) {
+
+	public function new(x:Float, y:Float, fixed = false) {
 		this.x = x;
 		this.y = y;
 		this.fixed = fixed;
@@ -47,7 +48,7 @@ class Speed implements IComponent {
 class Gravity implements IComponent {
 	var x:Float;
 	var y:Float;
-	
+
 	public function new(x:Float, y:Float) {
 		this.x = x;
 		this.y = y;
@@ -67,22 +68,22 @@ class Life implements IComponent {
 	var alive:Bool;
 	var hp:Int;
 	var maxHp:Int;
-	static inline var damageSkipMax = 60;
+	static inline var DAMAGE_MAX_SKIP = 60;
 	var damageSkip = 0;
-	
-	public function new(alive=true, hp=100) {
+
+	public function new(alive = true, hp = 100) {
 		this.alive = alive;
 		this.hp = hp;
 		maxHp = hp;
 	}
-	
+
 	public inline function damage(dmg:Int):Void {
 		if (damageSkip != 0) return;
 		hp -= dmg;
 		if (hp <= 0) alive = false;
-		else damageSkip = damageSkipMax;
+		else damageSkip = DAMAGE_MAX_SKIP;
 	}
-	
+
 	public inline function heal(add:Int):Void {
 		hp += add;
 		if (hp > maxHp) hp = maxHp;
@@ -122,8 +123,8 @@ class Bow implements IComponent {
 	var aimLine = 5;
 	var ang:Float;
 	var arrow:Entity;
-	
-	public function new(ang:Float=0, tMin:Float=5, tMax:Float=20, tSpeed:Float=0.5) {
+
+	public function new(ang:Float = 0, tMin:Float = 5, tMax:Float = 20, tSpeed:Float = 0.5) {
 		this.ang = ang;
 		this.tensionMin = tMin;
 		this.tensionMax = tMax;
@@ -146,8 +147,8 @@ class Arrow implements IComponent {
 	var lastSpeedY:Float;
 	var ang:Float;
 	var type:ArrowType;
-	
-	public function new(type=0, ?player:Entity) {
+
+	public function new(type = 0, ?player:Entity) {
 		this.player = player;
 		this.type = type;
 	}
@@ -159,14 +160,14 @@ class Item implements IComponent {
 }
 
 class Coin extends Item {
-	
+
 	public function new() {
 		super();
 	}
 }
 
 class Hp extends Item {
-	
+
 	public function new() {
 		super();
 	}
@@ -181,11 +182,11 @@ abstract ChestReward(Int) from Int to Int {
 	var SHOCKED_ARROWS = 4;
 	var BLOWN_ARROWS = 5;
 	var END = 6;
-	
+
 	public inline function new(type:ChestReward) this = type;
-	
+
 	@:from public static function fromString(type:String):ChestReward {
-		return Macro.fromString(ChestReward);
+		return EnumAbstractTools.fromString(type, ChestReward);
 	}
 }
 
@@ -203,7 +204,7 @@ class Chest implements IComponent {
 	var animY = 0;
 	var maxAnimY = 70;
 	var player:Entity;
-	
+
 	public function new(reward:ChestReward) {
 		this.reward = reward;
 	}
@@ -211,8 +212,8 @@ class Chest implements IComponent {
 
 class Anim implements IComponent {
 	var repeat:Int;
-	
-	public function new(repeat=1) {
+
+	public function new(repeat = 1) {
 		this.repeat = repeat;
 	}
 }
@@ -224,15 +225,15 @@ class Sprite implements IComponent {
 	var h:Int;
 	var frame = 0;
 	var sets:Map<String, Array<Int>>;
-	
+
 	var dir = 1;
 	var frameDelay = 0;
 	var frameDelayMax:Int;
 	var frameType:String;
 	var frameTypeId:Int;
 	var animCounter = 0;
-	
-	public function new(img:Image, w:Int, h:Int, frameDelayMax=5, ?sets) {
+
+	public function new(img:Image, w:Int, h:Int, frameDelayMax = 5, ?sets) {
 		this.img = img;
 		this.w = w;
 		this.h = h;
@@ -243,12 +244,12 @@ class Sprite implements IComponent {
 			var setH = Std.int(img.height / h);
 			var type = "anim";
 			this.sets = [
-				type => [for (i in 0...setW*setH) i]
+				type => [for (i in 0...setW * setH) i]
 			];
 			setAnimType(type);
 		}
 	}
-	
+
 	public inline function setAnimType(type:String):Void {
 		if (frameType == type) return;
 		frameType = type;
@@ -256,13 +257,13 @@ class Sprite implements IComponent {
 		frame = sets[type][0];
 		frameDelay = 0;
 	}
-	
+
 	public inline function setAnimFrame(id:Int):Void {
 		frameTypeId = id;
 		frame = sets[frameType][id];
 		frameDelay = 0;
 	}
-	
+
 	public inline function playAnimType():Void {
 		frameDelay++;
 		if (frameDelay < frameDelayMax) return;

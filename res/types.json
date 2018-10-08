@@ -1,9 +1,0 @@
-{
-	"objects": [
-		{"type": "Player", "layer": 3, "tile": 1},
-		{"type": "End"},
-		{"type": "Death"},
-		{"type": "Chest", "args": "reward:String", "layer": 3, "tile": 4},
-		{"type": "Enemy", "args": "type:String", "layer": 3, "tile": 5}
-	]
-}

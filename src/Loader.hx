@@ -4,7 +4,12 @@ import kha.Framebuffer;
 import kha.graphics2.Graphics;
 import kha.System;
 import kha.Assets;
+import khm.Settings;
+import khm.Screen;
+import khm.Lang;
+import khm.tilemap.Tilemap;
 import game.Game;
+import khm.editor.Editor;
 
 class Loader {
 
@@ -19,38 +24,58 @@ class Loader {
 		System.removeFramesListener(onRender);
 
 		var sets = Settings.read();
-		Screen.init({touch: sets.touchMode});
-		if (sets.lang == null) Lang.init();
-		else Lang.set(sets.lang);
+		Screen.init({isTouch: sets.touchMode});
+		Lang.loadFolder("langs");
+		Lang.set(sets.lang);
 		Graphics.fontGlyphs = Lang.fontGlyphs;
+
+		Editor.testMap = function(editor:Editor, tilemap:Tilemap) {
+			var game = new Game();
+			game.show();
+			game.init(editor);
+			var map = tilemap.toJSON(tilemap.map);
+			game.playCustomLevel(map);
+		};
+
+		Editor.exit = function() {
+			// var menu = new Menu();
+			// menu.show();
+			// menu.init();
+		};
+
+		Settings.init({
+			levelProgress: 1,
+			controlType: 1
+		});
 
 		#if kha_html5
 		var nav = js.Browser.window.location.hash.substr(1);
-		switch(nav) {
-		case "editor":
-			var editor = new editor.Editor();
-			editor.show();
-			editor.init();
-		case "game":
-			var game = new Game();
-			game.show();
-			game.init();
-			game.playCompany();
-		default: newMenu();
+		switch (nav) {
+			case "editor":
+				var editor = new khm.editor.Editor();
+				editor.show();
+				editor.init();
+			case "game":
+				var game = new game.Game();
+				game.show();
+				game.init();
+				game.playCampaign();
+			default:
+				newMenu();
 		}
 		#else
 		newMenu();
 		#end
 	}
 
-	inline function newMenu():Void {
-		/*var menu = new Menu();
-		menu.show();
-		menu.init();*/
-		var game = new Game();
+	function newMenu():Void {
+		// var menu = new Menu();
+		// menu.show();
+		// menu.init();
+		var game = new game.Game();
 		game.show();
 		game.init();
-		game.playCompany();
+		game.playCampaign();
 	}
 
 	function onRender(fbs:Array<Framebuffer>):Void {

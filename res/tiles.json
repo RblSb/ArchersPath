@@ -1,157 +1,218 @@
 {
-	"tsize": 32,
-	"scale": 1,
+	"tileSize": 32,
 	"layers": [
-		[],
+		[{}],
 		[
+			{},
 			{
-				"file": "grass_t",
+				"file": "tiles/1/grass_t",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"file": "grass2_t",
+				"file": "tiles/1/grass2_t",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"file": "grass_t_bg",
+				"file": "tiles/1/grass_t_bg",
 				"collide": false,
 				"permeable": false
 			},
 			{
-				"file": "grass2_t_bg",
-				"add": ["flipX"],
+				"file": "tiles/1/grass2_t_bg",
 				"collide": false,
 				"permeable": false
 			},
 			{
-				"file": "grass_tl",
-				"add": ["flipX"],
+				"tx": 0,
+				"ty": 0,
+				"transformation": "flipX",
+				"collide": false,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/grass_tl",
 				"type": "HALF_R",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"file": "ground_t",
-				"collide": true,
-				"permeable": false
-			},
-			{
-				"file": "ground2_t",
-				"collide": true,
-				"permeable": false
-			},
-			{
-				"file": "ground_t_bg",
-				"collide": false,
-				"permeable": false
-			},
-			{
-				"file": "ground2_t_bg",
-				"collide": false,
-				"permeable": false
-			},
-			{
-				"file": "ground3_t_bg",
-				"collide": false,
-				"permeable": false
-			},
-			{
-				"file": "ground_tl",
-				"add": ["flipX"],
+				"tx": 0,
+				"ty": 0,
+				"transformation": "flipX",
 				"type": "HALF_R",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"file": "ground_l_bg",
-				"add": ["flipX"],
+				"file": "tiles/1/ground_t",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/ground2_t",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/ground_t_bg",
 				"collide": false,
 				"permeable": false
 			},
 			{
-				"file": "ground_l",
-				"add": ["flipX"],
+				"file": "tiles/1/ground2_t_bg",
+				"collide": false,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/ground3_t_bg",
+				"collide": false,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/ground_tl",
 				"type": "HALF_R",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"file": "ground_tl_bg",
-				"add": ["flipX"],
+				"tx": 0,
+				"ty": 0,
+				"transformation": "flipX",
 				"type": "HALF_R",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"file": "ground2_tl",
-				"add": ["flipX"],
+				"file": "tiles/1/ground_l_bg",
+				"collide": false,
+				"permeable": false
+			},
+			{
+				"tx": 0,
+				"ty": 0,
+				"transformation": "flipX",
+				"collide": false,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/ground_l",
+				"type": "HALF_R",
 				"collide": true,
 				"permeable": false
 			},
 			{
-				"file": "ground_bl",
-				"add": ["flipX"],
+				"tx": 0,
+				"ty": 0,
+				"transformation": "flipX",
+				"type": "HALF_R",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/ground_tl_bg",
+				"type": "HALF_R",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"tx": 0,
+				"ty": 0,
+				"transformation": "flipX",
+				"type": "HALF_R",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/ground2_tl",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"tx": 0,
+				"ty": 0,
+				"transformation": "flipX",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/ground_bl",
 				"type": "QUARTER_TR",
 				"collide": false,
 				"permeable": false
 			},
 			{
-				"file": "ground_b",
-				"type": "HALF_T",
-				"collide": true,
-				"permeable": false
-			},
-			{
-				"file": "ground",
-				"collide": true,
-				"permeable": false
-			},
-			{
-				"file": "ground2",
-				"collide": true,
-				"permeable": false
-			},
-			{
-				"file": "ground3",
-				"collide": true,
-				"permeable": false
-			},
-			{
-				"file": "bridge",
-				"type": "HALF_T",
-				"collide": true,
-				"permeable": false
-			},
-			{
-				"file": "bridge_t_bg",
+				"tx": 0,
+				"ty": 0,
+				"transformation": "flipX",
+				"type": "QUARTER_TR",
 				"collide": false,
 				"permeable": false
 			},
 			{
-				"file": "ground_bl2",
-				"add": ["flipX"],
+				"file": "tiles/1/ground_b",
+				"type": "HALF_T",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/ground",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/ground2",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/ground3",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/bridge",
+				"type": "HALF_T",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/bridge_t_bg",
+				"collide": false,
+				"permeable": false
+			},
+			{
+				"file": "tiles/1/ground_bl2",
+				"type": "QUARTER_TR",
+				"collide": true,
+				"permeable": false
+			},
+			{
+				"tx": 0,
+				"ty": 0,
+				"transformation": "flipX",
 				"type": "QUARTER_TR",
 				"collide": true,
 				"permeable": false
 			}
 		],
 		[
+			{},
 			{
-				"file": "1"
+				"file": "tiles/2/1"
 			},
 			{
-				"file": "2"
+				"file": "tiles/2/2"
 			},
 			{
-				"file": "3"
+				"file": "tiles/2/3"
 			},
 			{
-				"file": "4"
+				"file": "tiles/2/4"
 			},
 			{
-				"file": "5"
+				"file": "tiles/2/5"
 			}
 		]
 	]
