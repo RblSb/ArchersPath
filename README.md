@@ -1,6 +1,8 @@
 ## Archer's Path
 
-[Play Online](http://mssite.org/projects/ArchersPath/)
+Some old non-optimized platformer demo with bad gameplay and dirty code, also first ECS experience.
+
+[Play Online](https://rblsb.github.io/ArchersPath/)
 
 Edge library uses "kedge" branch.
 Several methods from thx.core have been removed to be able to compile with Haxe 4.
